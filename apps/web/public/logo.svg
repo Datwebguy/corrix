@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <defs>
+    <linearGradient id="corrix" x1="10" y1="6" x2="54" y2="58" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#D4FF6A"/>
+      <stop offset="0.4" stop-color="#B8F24A"/>
+      <stop offset="1" stop-color="#2F5A22"/>
+    </linearGradient>
+  </defs>
+  <!-- Transparent background for header use -->
+  <path
+    d="M45.2 16.8C41.2 13.2 36 11 30.5 11 19.3 11 10 20.3 10 31.5S19.3 52 30.5 52c5.5 0 10.7-2.2 14.7-5.8"
+    stroke="url(#corrix)"
+    stroke-width="10"
+    stroke-linecap="round"
+  />
+  <circle cx="47.5" cy="31.5" r="5.8" fill="#B8F24A"/>
+</svg>

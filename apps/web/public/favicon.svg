@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <defs>
+    <linearGradient id="c" x1="12" y1="8" x2="52" y2="56" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#D4FF6A"/>
+      <stop offset="0.45" stop-color="#B8F24A"/>
+      <stop offset="1" stop-color="#3D6B28"/>
+    </linearGradient>
+  </defs>
+  <!-- Dark tile for app icon contexts; browsers ignore extra for simple favicons -->
+  <rect width="64" height="64" rx="14" fill="#0A0F0C"/>
+  <!-- Open ring = C -->
+  <path
+    d="M44.5 18.2C40.8 14.9 36 13 30.8 13 20.2 13 11.5 21.7 11.5 32.3c0 10.6 8.7 19.3 19.3 19.3 5.2 0 10-1.9 13.7-5.2"
+    stroke="url(#c)"
+    stroke-width="9"
+    stroke-linecap="round"
+  />
+  <!-- Verification node at the C opening -->
+  <circle cx="46.5" cy="32.3" r="5.2" fill="#B8F24A"/>
+</svg>

@@ -1,0 +1,24 @@
+{
+  "name": "corrix",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Corrix — paid claim & output verification agent on CROO CAP",
+  "license": "MIT",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:web": "npm run dev -w @corrix/web",
+    "build:web": "npm run build -w @corrix/web",
+    "provider": "npm run start -w @corrix/provider",
+    "provider:mock": "npm run start:mock -w @corrix/provider",
+    "hire": "npm run hire -w @corrix/provider",
+    "demo:requester": "npm run hire -w @corrix/provider",
+    "verify:local": "npm run test -w @corrix/core",
+    "build": "npm run build -w @corrix/core && npm run build -w @corrix/web"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
