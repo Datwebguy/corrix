@@ -1421,13 +1421,14 @@ code {
   line-height: 1.65;
 }
 
-/* â”€â”€ Console app (separate shell) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* Console app (separate shell) */
 
 .console-app {
   position: relative;
   min-height: 100dvh;
-  background: var(--bg);
-  overflow-x: hidden;
+  background: #070b09;
+  overflow-x: clip;
+  color: var(--text);
 }
 
 .console-spiral {
@@ -1437,7 +1438,7 @@ code {
   width: 100%;
   height: 100%;
   pointer-events: none;
-  opacity: 0.95;
+  opacity: 0.55;
 }
 
 .console-veil {
@@ -1445,57 +1446,50 @@ code {
   inset: 0;
   z-index: 0;
   pointer-events: none;
+  /* Stronger veil so form text stays crisp over the spiral */
   background:
-    linear-gradient(115deg, rgba(5, 8, 6, 0.55) 0%, rgba(5, 8, 6, 0.25) 40%, rgba(5, 8, 6, 0.5) 100%),
-    linear-gradient(180deg, rgba(3, 5, 4, 0.45) 0%, transparent 20%, rgba(3, 5, 4, 0.35) 100%);
-}
-
-.console-top,
-.console-body {
-  font-family: var(--font);
-  background: var(--bg);
-  color: var(--text);
-  line-height: 1.55;
-  min-height: 100dvh;
-  min-height: 100svh;
-  -webkit-font-smoothing: antialiased;
-  overflow-x: clip;
-  width: 100%;
-  max-width: 100vw;
+    radial-gradient(ellipse 90% 70% at 50% 20%, rgba(7, 11, 9, 0.35), rgba(7, 11, 9, 0.82) 70%),
+    linear-gradient(180deg, rgba(5, 8, 6, 0.75) 0%, rgba(5, 8, 6, 0.55) 40%, rgba(5, 8, 6, 0.8) 100%);
 }
 
 .console-top {
-  border-bottom: 1px solid var(--border);
-  background: rgba(7, 11, 9, 0.72);
-  backdrop-filter: blur(14px);
   position: sticky;
   top: 0;
   z-index: 20;
+  height: 56px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(7, 11, 9, 0.92);
+  backdrop-filter: blur(16px);
 }
 
 .console-top-inner {
-  width: min(100% - 1.75rem, var(--max));
+  width: 100%;
+  max-width: var(--max);
   margin-inline: auto;
-  height: 60px;
+  padding-inline: clamp(0.9rem, 3vw, 1.5rem);
+  height: 100%;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 0.75rem;
+  box-sizing: border-box;
 }
 
 .console-top-meta {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 0.75rem;
+  flex-shrink: 0;
 }
 
 .console-badge {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  font-size: 0.78rem;
+  font-size: 0.75rem;
   font-weight: 600;
   color: var(--accent);
-  padding: 0.3rem 0.7rem;
+  padding: 0.28rem 0.65rem;
   border-radius: 999px;
   border: 1px solid var(--border-strong);
   background: var(--accent-soft);
@@ -1503,7 +1497,7 @@ code {
 
 .console-link {
   font-size: 0.88rem;
-  color: var(--text-dim);
+  color: #c5d4c8;
   font-weight: 500;
 }
 
@@ -1512,59 +1506,118 @@ code {
 }
 
 .console-body {
-  font-family: var(--font);
-  background: var(--bg);
-  color: var(--text);
-  line-height: 1.55;
-  min-height: 100dvh;
-  min-height: 100svh;
-  -webkit-font-smoothing: antialiased;
-  overflow-x: clip;
+  position: relative;
+  z-index: 1;
   width: 100%;
-  max-width: 100vw;
+  max-width: var(--max);
+  margin-inline: auto;
+  padding: clamp(1rem, 3vw, 1.5rem) clamp(0.9rem, 3vw, 1.5rem) clamp(2rem, 5vw, 3rem);
+  box-sizing: border-box;
+  /* Do NOT set min-height: 100vh here — that caused the huge top gap */
 }
 
 .console-intro {
-  margin-bottom: 1.5rem;
-  max-width: 40rem;
+  margin: 0 0 1.15rem;
+  max-width: 42rem;
 }
 
 .console-intro h1 {
-  font-size: clamp(1.5rem, 3vw, 1.85rem);
+  font-size: clamp(1.35rem, 3.5vw, 1.75rem);
   letter-spacing: -0.03em;
-  margin-bottom: 0.4rem;
+  margin: 0 0 0.4rem;
+  color: #f2f7f0;
+  font-weight: 700;
 }
 
 .console-intro p {
-  color: var(--text-dim);
-  font-size: 0.95rem;
+  margin: 0;
+  color: #c8d5cc;
+  font-size: clamp(0.88rem, 2.2vw, 0.95rem);
+  line-height: 1.55;
 }
 
 .console-grid {
   display: grid;
   gap: 1rem;
+  width: 100%;
+  min-width: 0;
 }
 
 @media (min-width: 960px) {
   .console-grid {
-    grid-template-columns: 1fr 1fr;
-    gap: 1.25rem;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 1.15rem;
     align-items: start;
   }
 }
 
 .card {
-  background: rgba(16, 26, 21, 0.88);
-  border: 1px solid var(--border);
+  background: rgba(12, 20, 15, 0.94);
+  border: 1px solid rgba(184, 242, 74, 0.18);
   border-radius: var(--radius);
-  padding: 1.25rem;
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
-  backdrop-filter: blur(10px);
+  padding: clamp(1rem, 2.5vw, 1.35rem);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(12px);
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
 }
 
-@media (min-width: 768px) {
-  .card {
-    padding: 1.45rem;
+.card-title {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: #a8b8ac;
+  margin-bottom: 0.85rem;
+}
+
+.field label {
+  color: #d0ddd4;
+}
+
+.field textarea {
+  background: rgba(5, 10, 7, 0.92);
+  border: 1px solid rgba(184, 242, 74, 0.16);
+  color: #f2f7f0;
+}
+
+.field textarea::placeholder {
+  color: #6a7a6e;
+}
+
+.chip {
+  color: #c5d4c8;
+  background: rgba(20, 32, 24, 0.95);
+}
+
+.chip.active,
+.chip:hover {
+  color: var(--accent);
+}
+
+.summary,
+.verdict-meta,
+.check-row span,
+.receipt-empty p {
+  color: #c5d4c8;
+}
+
+.hash-box {
+  color: #c8f26a;
+}
+
+@media (max-width: 640px) {
+  .console-top {
+    height: 52px;
+  }
+
+  .console-top-meta .console-link {
+    font-size: 0.82rem;
+  }
+
+  .console-badge {
+    display: none;
   }
 }
 

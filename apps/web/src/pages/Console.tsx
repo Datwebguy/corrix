@@ -167,9 +167,8 @@ export function Console() {
         <div className="console-intro">
           <h1>Verification console</h1>
           <p>
-            Run the Corrix engine in-browser on a claim and sources. Output uses
-            the same receipt schema as live CAP deliveries. Paid on chain hires
-            go through the provider worker and Agent Store, see Docs.
+            Paste a claim and sources to run the engine. Receipts match the CAP
+            delivery schema. For paid hires, use the Agent Store (see Docs).
           </p>
         </div>
 

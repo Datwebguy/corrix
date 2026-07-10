@@ -234,14 +234,15 @@ export function FlowField({ mode = "dual", className = "flow-field" }: FlowField
       const globalMul = mode === "dual" ? 0.92 : 0.85;
 
       for (const pt of points) {
-        // Fade particles that cross the center content zone on dual mode
+        // Soften particles over the content column so UI stays readable
         let zoneFade = 1;
         if (mode === "dual") {
-          const nx = pt.x / w;
-          // Soften middle 35 to 65% so headline stays crisp
-          if (nx > 0.32 && nx < 0.68) {
-            const d = Math.min(nx - 0.32, 0.68 - nx) / 0.18;
-            zoneFade = 0.25 + 0.75 * Math.min(1, d);
+          const { col, left, right } = contentBox();
+          const pad = col * 0.06;
+          if (pt.x > left + pad && pt.x < right - pad) {
+            const mid = left + col / 2;
+            const dist = Math.abs(pt.x - mid) / (col / 2);
+            zoneFade = 0.12 + dist * 0.55;
           }
         }
 
