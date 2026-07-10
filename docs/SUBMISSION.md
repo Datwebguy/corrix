@@ -37,6 +37,6 @@
 2. Service `verify` with schemas from README  
 3. Fund both AA wallets (USDC Base)  
 4. `npm run provider`  
-5. `npm run demo:requester`  
+5. `npm run hire`  
 6. Drive real orders from Discord / other agents  
 7. Record demo · open-source · submit BUIDL  

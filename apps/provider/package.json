@@ -5,9 +5,9 @@
   "type": "module",
   "scripts": {
     "start": "tsx src/provider.ts",
-    "start:mock": "cross-env MOCK=1 tsx src/provider.ts",
+    "start:local": "cross-env LOCAL=1 tsx src/provider.ts",
+    "start:mock": "cross-env LOCAL=1 tsx src/provider.ts",
     "hire": "tsx src/requester.ts",
-    "demo": "tsx src/requester.ts",
     "build": "tsc -p tsconfig.json"
   },
   "dependencies": {

@@ -1,6 +1,6 @@
 /**
- * Browser-safe verification engine (no node:crypto).
- * Mirrors packages/core engine for the demo UI.
+ * Browser-safe verification engine (Web Crypto).
+ * Keep in sync with packages/core engine semantics for the web console.
  */
 
 export type Verdict = "support" | "refute" | "unclear" | "partial";

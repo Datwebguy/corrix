@@ -1,17 +1,9 @@
 /**
- * Corrix CAP Provider
+ * Corrix CAP Provider — live worker
  *
- * SDK methods used:
- * - new AgentClient(config, sdkKey)
- * - client.connectWebSocket()
- * - stream.on(EventType.NegotiationCreated | OrderPaid | ...)
- * - client.acceptNegotiation(negotiationId)
- * - client.getOrder(orderId)
- * - client.deliverOrder(orderId, { deliverableType, deliverableSchema | deliverableText })
- * - client.rejectOrder(orderId, reason)
- * - stream.close()
+ * SDK: AgentClient, connectWebSocket, acceptNegotiation, getOrder,
+ * getNegotiation, deliverOrder, rejectOrder, EventType.*
  */
-import "dotenv/config";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { config as loadEnv } from "dotenv";
@@ -21,32 +13,16 @@ import {
   type VerifyReceipt,
 } from "@corrix/core";
 
-// Load monorepo root .env if present
 const __dirname = dirname(fileURLToPath(import.meta.url));
 loadEnv({ path: resolve(__dirname, "../../../.env") });
+loadEnv(); // also allow cwd .env
 
-const MOCK = process.env.MOCK === "1" || process.env.MOCK === "true";
+const LOCAL = process.env.LOCAL === "1" || process.env.LOCAL === "true"
+  || process.env.MOCK === "1" || process.env.MOCK === "true";
 
-async function runMock(): Promise<void> {
-  console.log("╔══════════════════════════════════════╗");
-  console.log("║   Corrix  ·  mock provider mode     ║");
-  console.log("╚══════════════════════════════════════╝");
-  console.log("Running local verification smoke test…\n");
-
-  const sample = {
-    claim: "CROO Agent Protocol enables agents to hire and pay each other in USDC on Base",
-    sources: [
-      "https://cap.croo.network/",
-      "CAP standardizes discovery, orders, delivery proofs, and on-chain settlement. Agents can hire other agents and settle in USDC. Evidence confirms this.",
-    ],
-    deliverable:
-      "Research brief: CAP is the commerce layer for A2A paid orders on CROO, settling USDC on Base.",
-  };
-
-  const receipt = await verifyClaim(sample);
-  printReceipt(receipt);
-  console.log("\n✓ Mock provider OK. Set CROO_SDK_KEY and run without MOCK for live CAP.");
-}
+/** Prevent concurrent double-delivery on the same order */
+const inFlight = new Set<string>();
+const delivered = new Set<string>();
 
 function printReceipt(receipt: VerifyReceipt): void {
   console.log(`Verdict:     ${receipt.verdict.toUpperCase()}`);
@@ -60,25 +36,63 @@ function printReceipt(receipt: VerifyReceipt): void {
   }
 }
 
-function extractRequirements(order: unknown): unknown {
-  const o = order as Record<string, unknown>;
-  // Defensive: SDK order shapes may nest requirements
-  if (o.requirements != null) return o.requirements;
-  if (o.Requirements != null) return o.Requirements;
-  const data = o.data as Record<string, unknown> | undefined;
-  if (data?.requirements != null) return data.requirements;
-  if (typeof o === "object" && o !== null) {
-    for (const key of Object.keys(o)) {
-      if (key.toLowerCase().includes("require")) return o[key];
-    }
+/**
+ * Pull requirements from Order / Negotiation shapes returned by the SDK.
+ * Order typings may omit requirements; runtime + negotiation fallback cover it.
+ */
+function extractRequirements(
+  order: Record<string, unknown>,
+  negotiation?: Record<string, unknown> | null,
+): unknown {
+  const candidates: unknown[] = [
+    order.requirements,
+    order.Requirements,
+    order.requirement,
+    (order.data as Record<string, unknown> | undefined)?.requirements,
+    negotiation?.requirements,
+    negotiation?.Requirements,
+  ];
+
+  for (const c of candidates) {
+    if (c != null && c !== "") return c;
   }
-  return o;
+
+  // Last resort: scan keys
+  for (const [k, v] of Object.entries(order)) {
+    if (k.toLowerCase().includes("require") && v != null && v !== "") return v;
+  }
+
+  throw new Error(
+    "Order has no requirements field — cannot verify. Ensure hire sends claim/sources JSON.",
+  );
+}
+
+async function runLocal(): Promise<void> {
+  console.log("╔══════════════════════════════════════╗");
+  console.log("║   Corrix  ·  local engine mode       ║");
+  console.log("╚══════════════════════════════════════╝");
+  console.log("No CAP keys required. Running engine only.\n");
+
+  const sample = {
+    claim:
+      "CROO Agent Protocol enables agents to hire and pay each other in USDC on Base",
+    sources: [
+      "https://cap.croo.network/",
+      "CAP standardizes discovery, orders, delivery proofs, and on-chain settlement. Agents can hire other agents and settle in USDC. Evidence confirms this.",
+    ],
+    deliverable:
+      "Research brief: CAP is the commerce layer for A2A paid orders on CROO, settling USDC on Base.",
+  };
+
+  const receipt = await verifyClaim(sample);
+  printReceipt(receipt);
+  console.log("\n✓ Local engine OK. Use npm run provider (with CROO_SDK_KEY) for live CAP.");
 }
 
 async function runLive(): Promise<void> {
-  const sdkKey = process.env.CROO_SDK_KEY;
+  const sdkKey = process.env.CROO_SDK_KEY?.trim();
   if (!sdkKey) {
-    console.error("Missing CROO_SDK_KEY. Copy .env.example → .env or use MOCK=1");
+    console.error("Missing CROO_SDK_KEY. Copy .env.example → .env");
     process.exit(1);
   }
 
@@ -86,14 +100,13 @@ async function runLive(): Promise<void> {
   const wsURL = process.env.CROO_WS_URL ?? "wss://api.croo.network/ws";
   const rpcURL = process.env.BASE_RPC_URL ?? "https://mainnet.base.org";
 
-  // Dynamic import so mock mode works without install issues
   const { AgentClient, EventType, DeliverableType } = await import("@croo-network/sdk");
 
   const client = new AgentClient({ baseURL, wsURL, rpcURL }, sdkKey);
   const stream = await client.connectWebSocket();
 
   console.log("╔══════════════════════════════════════╗");
-  console.log("║   Corrix  ·  CAP provider online    ║");
+  console.log("║   Corrix  ·  CAP provider online     ║");
   console.log("╚══════════════════════════════════════╝");
   console.log(`API: ${baseURL}`);
   console.log("Listening for negotiations & paid orders…\n");
@@ -105,22 +118,49 @@ async function runLive(): Promise<void> {
       console.log(`[neg] accept ${negotiationId}`);
       const result = await client.acceptNegotiation(negotiationId);
       const orderId =
-        (result as { order?: { orderId?: string } })?.order?.orderId ?? "(created)";
+        result?.order?.orderId ??
+        (result as { orderId?: string })?.orderId ??
+        "(created)";
       console.log(`[neg] order ${orderId}`);
     } catch (err) {
-      console.error("[neg] accept failed", err);
+      console.error("[neg] accept failed", err instanceof Error ? err.message : err);
     }
   });
 
-  stream.on(EventType.OrderPaid, async (e: { order_id?: string }) => {
+  stream.on(EventType.OrderPaid, async (e: { order_id?: string; negotiation_id?: string }) => {
     const orderId = e.order_id;
     if (!orderId) return;
+
+    if (delivered.has(orderId) || inFlight.has(orderId)) {
+      console.log(`[order] skip ${orderId} (already handled)`);
+      return;
+    }
+    inFlight.add(orderId);
+
     console.log(`[order] paid ${orderId} — verifying…`);
     try {
-      const order = await client.getOrder(orderId);
-      const raw = extractRequirements(order);
+      const order = (await client.getOrder(orderId)) as unknown as Record<string, unknown>;
+
+      let negotiation: Record<string, unknown> | null = null;
+      const negotiationId =
+        (order.negotiationId as string | undefined) ??
+        (order.negotiation_id as string | undefined) ??
+        e.negotiation_id;
+
+      if (negotiationId) {
+        try {
+          negotiation = (await client.getNegotiation(negotiationId)) as unknown as Record<
+            string,
+            unknown
+          >;
+        } catch {
+          /* optional fallback */
+        }
+      }
+
       let receipt: VerifyReceipt;
       try {
+        const raw = extractRequirements(order, negotiation);
         const req = parseRequirements(raw);
         receipt = await verifyClaim(req);
       } catch (parseErr) {
@@ -132,29 +172,51 @@ async function runLive(): Promise<void> {
 
       printReceipt(receipt);
 
-      // Prefer Schema deliverable for structured A2A consumption
+      // SDK DeliverOrderRequest: deliverableSchema must be a string
+      const schemaJson = JSON.stringify(receipt);
+      let deliveredOk = false;
+
       try {
-        await client.deliverOrder(orderId, {
+        const result = await client.deliverOrder(orderId, {
           deliverableType: DeliverableType.Schema,
-          deliverableSchema: receipt as unknown as Record<string, unknown>,
+          deliverableSchema: schemaJson,
         });
-      } catch {
-        await client.deliverOrder(orderId, {
-          deliverableType: DeliverableType.Text,
-          deliverableText: JSON.stringify(receipt),
-        });
+        console.log(
+          `[order] delivered ${orderId} · schema · tx ${result?.txHash ?? "ok"} · ${receipt.verdict} · ${receipt.contentHash.slice(0, 12)}…\n`,
+        );
+        deliveredOk = true;
+      } catch (schemaErr) {
+        console.warn(
+          `[order] schema deliver failed, trying text:`,
+          schemaErr instanceof Error ? schemaErr.message : schemaErr,
+        );
+        try {
+          const result = await client.deliverOrder(orderId, {
+            deliverableType: DeliverableType.Text,
+            deliverableText: schemaJson,
+          });
+          console.log(
+            `[order] delivered ${orderId} · text · tx ${result?.txHash ?? "ok"} · ${receipt.verdict} · ${receipt.contentHash.slice(0, 12)}…\n`,
+          );
+          deliveredOk = true;
+        } catch (textErr) {
+          throw textErr;
+        }
       }
-      console.log(`[order] delivered ${orderId} · ${receipt.verdict} · ${receipt.contentHash.slice(0, 12)}…\n`);
+
+      if (deliveredOk) delivered.add(orderId);
     } catch (err) {
-      console.error(`[order] handle failed ${orderId}`, err);
+      console.error(`[order] handle failed ${orderId}`, err instanceof Error ? err.message : err);
       try {
         await client.rejectOrder(
           orderId,
-          err instanceof Error ? err.message : "verification failed",
+          err instanceof Error ? err.message.slice(0, 200) : "verification failed",
         );
       } catch {
-        /* ignore */
+        /* ignore secondary failure */
       }
+    } finally {
+      inFlight.delete(orderId);
     }
   });
 
@@ -166,8 +228,9 @@ async function runLive(): Promise<void> {
     EventType.NegotiationRejected,
     EventType.NegotiationExpired,
   ]) {
-    stream.on(ev, (e: unknown) => {
-      console.log(`[event] ${String(ev)}`, e);
+    stream.on(ev, (e: { order_id?: string; negotiation_id?: string; type?: string }) => {
+      const id = e?.order_id ?? e?.negotiation_id ?? "";
+      console.log(`[event] ${String(ev)}${id ? ` ${id}` : ""}`);
     });
   }
 
@@ -176,10 +239,15 @@ async function runLive(): Promise<void> {
     stream.close();
     process.exit(0);
   });
+
+  process.on("SIGTERM", () => {
+    stream.close();
+    process.exit(0);
+  });
 }
 
-if (MOCK) {
-  runMock().catch((e) => {
+if (LOCAL) {
+  runLocal().catch((e) => {
     console.error(e);
     process.exit(1);
   });

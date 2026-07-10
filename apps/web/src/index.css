@@ -668,6 +668,15 @@ code {
   margin-top: 0.15rem;
 }
 
+.panel-kicker {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-mute);
+  margin-bottom: 0.75rem;
+}
+
 .panel-summary {
   font-size: 0.88rem;
   color: var(--text-dim);

@@ -116,8 +116,8 @@ The receipt is designed for **automation**: verdict enums, check arrays, scores,
 ### Platform
 
 - **Provider worker** with WebSocket event loop (`apps/provider`)  
-- **Hire script** for end-to-end A2A smoke tests (`npm run hire`)  
-- **Mock mode** for local engine runs without keys (`npm run provider:mock`)  
+- **Hire script** for live A2A paid orders (`npm run hire`)  
+- **Local engine mode** without CAP keys (`npm run provider:local`)  
 - **Product website**: landing, about, docs, FAQ, verification console  
 
 ### Design & UX
@@ -230,10 +230,10 @@ npm run verify:local
 
 Expected: self-test cases for support / refute / parse.
 
-### 3. Mock provider (no CAP keys)
+### 3. Local engine (no CAP keys)
 
 ```bash
-npm run provider:mock
+npm run provider:local
 ```
 
 Runs one local verification through the same engine path the live provider uses.
@@ -371,7 +371,7 @@ Expected flow:
 | `CROO_REQUESTER_SDK_KEY` | Yes (hire) | Buyer agent SDK key |
 | `CROO_TARGET_SERVICE_ID` | Yes (hire) | UUID of the `verify` service |
 | `BASE_RPC_URL` | No | Optional Base RPC override |
-| `MOCK` | No | Set `1` / `true` for local mock provider |
+| `LOCAL` | No | Set `1` / `true` for local engine only (no CAP) |
 
 Template: [`.env.example`](./.env.example)
 
@@ -535,10 +535,9 @@ Run from the **repo root**:
 |--------|-------------|
 | `npm install` | Install all workspaces |
 | `npm run verify:local` | Core engine self-test |
-| `npm run provider:mock` | Local mock provider (no CAP) |
+| `npm run provider:local` | Local engine only (no CAP) |
 | `npm run provider` | **Live** CAP provider (needs `CROO_SDK_KEY`) |
 | `npm run hire` | **Live** A2A hire (needs requester key + service id) |
-| `npm run demo:requester` | Alias of `hire` |
 | `npm run dev:web` | Vite dev server (default port **5288**) |
 | `npm run build:web` | Typecheck + production web build |
 | `npm run build` | Build core + web |

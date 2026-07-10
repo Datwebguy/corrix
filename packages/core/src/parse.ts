@@ -23,7 +23,20 @@ export function parseRequirements(raw: unknown): VerifyRequest {
     throw new Error("Requirements must be a JSON object or claim string");
   }
 
-  const obj = data as Record<string, unknown>;
+  let obj = data as Record<string, unknown>;
+
+  // Unwrap common nestings from CAP / SDK payloads
+  if (obj.requirements != null && typeof obj.requirements === "object") {
+    obj = obj.requirements as Record<string, unknown>;
+  } else if (typeof obj.requirements === "string") {
+    try {
+      const inner = JSON.parse(obj.requirements) as unknown;
+      if (inner && typeof inner === "object") obj = inner as Record<string, unknown>;
+    } catch {
+      /* keep outer */
+    }
+  }
+
   const claim = String(obj.claim ?? obj.statement ?? obj.text ?? "").trim();
   if (claim.length < 8) {
     throw new Error("claim is required (min 8 characters)");

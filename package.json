@@ -12,9 +12,9 @@
     "dev:web": "npm run dev -w @corrix/web",
     "build:web": "npm run build -w @corrix/web",
     "provider": "npm run start -w @corrix/provider",
-    "provider:mock": "npm run start:mock -w @corrix/provider",
+    "provider:local": "npm run start:local -w @corrix/provider",
+    "provider:mock": "npm run start:local -w @corrix/provider",
     "hire": "npm run hire -w @corrix/provider",
-    "demo:requester": "npm run hire -w @corrix/provider",
     "verify:local": "npm run test -w @corrix/core",
     "build": "npm run build -w @corrix/core && npm run build -w @corrix/web"
   },

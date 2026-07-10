@@ -11,5 +11,4 @@ export const SITE = {
   agentStore: "https://agent.croo.network",
   capDocs: "https://docs.croo.network/developer-docs/quick-start",
   croo: "https://croo.network",
-  email: "hello@corrix.network",
 } as const;

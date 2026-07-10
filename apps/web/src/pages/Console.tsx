@@ -164,9 +164,9 @@ export function Console() {
         <div className="console-intro">
           <h1>Verification console</h1>
           <p>
-            Submit a claim and sources. Corrix returns a structured receipt —
-            the same payload shape CAP deliverables use when agents hire the
-            service.
+            Run the Corrix engine in-browser on a claim and sources. Output uses
+            the same receipt schema as live CAP deliveries. Paid on-chain hires
+            go through the provider worker and Agent Store — see Docs.
           </p>
         </div>
 
@@ -228,8 +228,8 @@ export function Console() {
           </div>
 
           <div className="card">
-            <div className="card-title">Receipt · order lifecycle</div>
-            <div className="timeline" aria-label="CAP order lifecycle">
+            <div className="card-title">Receipt · pipeline stages</div>
+            <div className="timeline" aria-label="Verification pipeline stages">
               {CAP_STEPS.map((s, i) => {
                 const done = stepIndex > i || capStep === "clear";
                 const active = capStep === s.id && capStep !== "clear";
@@ -256,7 +256,7 @@ export function Console() {
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                 >
-                  <p>Receipt appears here after verification completes.</p>
+                  <p>Structured receipt appears here after the engine finishes.</p>
                 </motion.div>
               )}
               {loading && !receipt && (

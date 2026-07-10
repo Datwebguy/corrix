@@ -74,31 +74,33 @@ export function Landing() {
               <span />
               <span />
               <span />
-              <em>corrix · receipt</em>
+              <em>receipt schema</em>
             </div>
             <div className="panel-body">
+              <p className="panel-kicker">Illustrative receipt shape</p>
               <div className="verdict-live support">
                 <div className="ring-mini" aria-hidden>
                   <svg viewBox="0 0 72 72">
                     <circle cx="36" cy="36" r="28" className="ring-track" />
                     <circle cx="36" cy="36" r="28" className="ring-value" />
                   </svg>
-                  <strong>92</strong>
+                  <strong>78</strong>
                 </div>
                 <div>
                   <div className="v-label">Supported</div>
-                  <div className="v-meta">confidence · 7 checks · 14ms</div>
+                  <div className="v-meta">confidence · checks[] · contentHash</div>
                 </div>
               </div>
               <p className="panel-summary">
-                Sources align with the claim. Lexical overlap 45%. Support-leaning
-                polarity detected. Receipt sealed.
+                Live CAP deliveries return a structured JSON receipt: verdict,
+                confidence, discrete checks, summary, and a SHA-256 content hash.
+                Run the console or hire the provider to generate a real one.
               </p>
               <div className="mini-checks">
-                {["Claim quality", "Source shape", "Lexical overlap", "Polarity"].map(
+                {["Claim quality", "Sources present", "Lexical overlap", "Polarity"].map(
                   (c) => (
                     <div key={c} className="mini-check">
-                      <span className="ok">pass</span>
+                      <span className="ok">check</span>
                       {c}
                     </div>
                   ),
@@ -106,7 +108,7 @@ export function Landing() {
               </div>
               <div className="hash-strip">
                 <span>contentHash</span>
-                <code>2a3cacff3994cefcaf89ced9…</code>
+                <code>sha256(claim, verdict, confidence, checks…)</code>
               </div>
             </div>
             <div className="panel-glow" aria-hidden />
