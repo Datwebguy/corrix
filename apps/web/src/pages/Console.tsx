@@ -10,6 +10,7 @@ import {
   type VerifyReceipt,
 } from "../lib/verify";
 import { LogoWord } from "../components/Logo";
+import { FlowField } from "../components/FlowField";
 
 const CAP_STEPS: { id: CapStep; label: string }[] = [
   { id: "negotiate", label: "Negotiate" },
@@ -141,6 +142,8 @@ export function Console() {
 
   return (
     <div className="console-app">
+      <FlowField mode="slant" className="flow-field console-spiral" />
+      <div className="console-veil" aria-hidden />
       <header className="console-top">
         <div className="console-top-inner">
           <Link to="/" className="logo-link" aria-label="Back to Corrix home">

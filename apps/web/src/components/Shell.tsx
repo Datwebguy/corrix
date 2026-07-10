@@ -30,7 +30,7 @@ export function Shell() {
 
   return (
     <div className="shell">
-      <FlowField />
+      <FlowField mode="dual" />
       <div className="shell-vignette" aria-hidden />
 
       <header className="site-nav">
