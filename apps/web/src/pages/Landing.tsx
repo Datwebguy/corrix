@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { motion, useReducedMotion } from "framer-motion";
 import { SITE } from "../lib/site";
+import { AscentPath } from "../components/AscentPath";
 
 const fade = (delay = 0) => ({
   initial: { opacity: 0, y: 28 },
@@ -65,53 +66,12 @@ export function Landing() {
           </motion.div>
 
           <motion.div
-            className="hero-panel"
-            initial={reduce ? false : { opacity: 0, scale: 0.96 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.8, delay: 0.15 }}
+            className="hero-visual"
+            initial={reduce ? false : { opacity: 0, x: 28 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.75, delay: 0.12, ease: [0.22, 1, 0.36, 1] }}
           >
-            <div className="panel-chrome">
-              <span />
-              <span />
-              <span />
-              <em>receipt schema</em>
-            </div>
-            <div className="panel-body">
-              <p className="panel-kicker">Illustrative receipt shape</p>
-              <div className="verdict-live support">
-                <div className="ring-mini" aria-hidden>
-                  <svg viewBox="0 0 72 72">
-                    <circle cx="36" cy="36" r="28" className="ring-track" />
-                    <circle cx="36" cy="36" r="28" className="ring-value" />
-                  </svg>
-                  <strong>78</strong>
-                </div>
-                <div>
-                  <div className="v-label">Supported</div>
-                  <div className="v-meta">confidence · checks[] · contentHash</div>
-                </div>
-              </div>
-              <p className="panel-summary">
-                Live CAP deliveries return a structured JSON receipt: verdict,
-                confidence, discrete checks, summary, and a SHA-256 content hash.
-                Run the console or hire the provider to generate a real one.
-              </p>
-              <div className="mini-checks">
-                {["Claim quality", "Sources present", "Lexical overlap", "Polarity"].map(
-                  (c) => (
-                    <div key={c} className="mini-check">
-                      <span className="ok">check</span>
-                      {c}
-                    </div>
-                  ),
-                )}
-              </div>
-              <div className="hash-strip">
-                <span>contentHash</span>
-                <code>sha256(claim, verdict, confidence, checks…)</code>
-              </div>
-            </div>
-            <div className="panel-glow" aria-hidden />
+            <AscentPath />
           </motion.div>
         </div>
       </section>
