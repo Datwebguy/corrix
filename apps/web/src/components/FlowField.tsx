@@ -1,9 +1,13 @@
 import { useEffect, useRef } from "react";
 
 /**
- * Corrix signature background — evidence lattice.
- * Claim nodes emit green verification streams that resolve into receipt nodes.
- * Canvas-based; respects prefers-reduced-motion.
+ * Corrix atmosphere — contemporary product backdrop.
+ *
+ * Avoids the overused “AI agent mesh”: no node graphs, no constellation
+ * threads, no particle webs.
+ *
+ * Visual language: deep forest fields, soft volumetric light wells,
+ * film grain, and rare expanding verification seals.
  */
 export function FlowField() {
   const ref = useRef<HTMLCanvasElement>(null);
@@ -11,7 +15,7 @@ export function FlowField() {
   useEffect(() => {
     const canvas = ref.current;
     if (!canvas) return;
-    const ctx = canvas.getContext("2d");
+    const ctx = canvas.getContext("2d", { alpha: false });
     if (!ctx) return;
 
     const reduce =
@@ -20,193 +24,176 @@ export function FlowField() {
 
     let w = 0;
     let h = 0;
+    let dpr = 1;
     let raf = 0;
     let t = 0;
+    let grainPattern: CanvasPattern | null = null;
 
-    type Node = {
-      x: number;
-      y: number;
-      vx: number;
-      vy: number;
-      r: number;
-      kind: "claim" | "source" | "proof";
-      phase: number;
+    const wells = [
+      { x: 0.2, y: 0.2, r: 0.45, kind: 0 as 0 | 1, phase: 0.0, speed: 0.11 },
+      { x: 0.82, y: 0.16, r: 0.36, kind: 1 as 0 | 1, phase: 1.3, speed: 0.08 },
+      { x: 0.52, y: 0.78, r: 0.5, kind: 0 as 0 | 1, phase: 2.0, speed: 0.07 },
+      { x: 0.1, y: 0.72, r: 0.34, kind: 1 as 0 | 1, phase: 0.7, speed: 0.1 },
+      { x: 0.9, y: 0.58, r: 0.3, kind: 0 as 0 | 1, phase: 1.8, speed: 0.09 },
+    ];
+
+    type Seal = { x: number; y: number; age: number; max: number };
+    let seals: Seal[] = [];
+    let tick = 0;
+
+    const buildGrain = () => {
+      const size = 128;
+      const g = document.createElement("canvas");
+      g.width = size;
+      g.height = size;
+      const gctx = g.getContext("2d");
+      if (!gctx) return;
+      const img = gctx.createImageData(size, size);
+      const d = img.data;
+      for (let i = 0; i < d.length; i += 4) {
+        const n = (Math.random() * 255) | 0;
+        d[i] = n;
+        d[i + 1] = n;
+        d[i + 2] = n;
+        d[i + 3] = 255;
+      }
+      gctx.putImageData(img, 0, 0);
+      grainPattern = ctx.createPattern(g, "repeat");
     };
-
-    type Pulse = {
-      from: number;
-      to: number;
-      p: number;
-      speed: number;
-    };
-
-    let nodes: Node[] = [];
-    let pulses: Pulse[] = [];
 
     const resize = () => {
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
       w = window.innerWidth;
       h = window.innerHeight;
-      canvas.width = w * dpr;
-      canvas.height = h * dpr;
+      canvas.width = Math.floor(w * dpr);
+      canvas.height = Math.floor(h * dpr);
       canvas.style.width = `${w}px`;
       canvas.style.height = `${h}px`;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      seed();
+      buildGrain();
     };
 
-    const seed = () => {
-      const count = Math.min(48, Math.floor((w * h) / 28000));
-      nodes = Array.from({ length: count }, (_, i) => {
-        const kind: Node["kind"] =
-          i % 5 === 0 ? "claim" : i % 3 === 0 ? "proof" : "source";
-        return {
-          x: Math.random() * w,
-          y: Math.random() * h,
-          vx: (Math.random() - 0.5) * 0.22,
-          vy: (Math.random() - 0.5) * 0.22,
-          r: kind === "claim" ? 3.2 : kind === "proof" ? 2.6 : 1.8,
-          kind,
-          phase: Math.random() * Math.PI * 2,
-        };
+    const spawnSeal = () => {
+      seals.push({
+        x: w * (0.3 + Math.random() * 0.4),
+        y: h * (0.28 + Math.random() * 0.4),
+        age: 0,
+        max: Math.min(w, h) * (0.2 + Math.random() * 0.15),
       });
-      pulses = [];
-      for (let i = 0; i < Math.floor(count * 0.55); i++) {
-        const from = Math.floor(Math.random() * nodes.length);
-        let to = Math.floor(Math.random() * nodes.length);
-        if (to === from) to = (to + 1) % nodes.length;
-        pulses.push({
-          from,
-          to,
-          p: Math.random(),
-          speed: 0.002 + Math.random() * 0.004,
-        });
-      }
-    };
-
-    const dist = (a: Node, b: Node) => {
-      const dx = a.x - b.x;
-      const dy = a.y - b.y;
-      return Math.hypot(dx, dy);
+      if (seals.length > 3) seals.shift();
     };
 
     const frame = () => {
-      t += 0.008;
-      ctx.clearRect(0, 0, w, h);
+      t += reduce ? 0 : 0.006;
+      tick += 1;
 
-      // soft vertical depth wash
-      const g = ctx.createLinearGradient(0, 0, 0, h);
-      g.addColorStop(0, "rgba(11, 28, 18, 0.35)");
-      g.addColorStop(0.45, "rgba(7, 11, 9, 0)");
-      g.addColorStop(1, "rgba(5, 14, 10, 0.45)");
-      ctx.fillStyle = g;
+      // Solid base (no transparency flicker)
+      const base = ctx.createLinearGradient(0, 0, w * 0.2, h);
+      base.addColorStop(0, "#060a08");
+      base.addColorStop(0.5, "#0a110d");
+      base.addColorStop(1, "#050807");
+      ctx.fillStyle = base;
       ctx.fillRect(0, 0, w, h);
 
-      // slow aurora ribbon
+      // Volumetric light wells
       ctx.save();
       ctx.globalCompositeOperation = "lighter";
-      for (let i = 0; i < 3; i++) {
-        const y = h * (0.2 + i * 0.22) + Math.sin(t * 0.7 + i) * 40;
-        const grad = ctx.createLinearGradient(0, y - 80, w, y + 80);
-        grad.addColorStop(0, "rgba(184, 242, 74, 0)");
-        grad.addColorStop(0.5, `rgba(184, 242, 74, ${0.03 + i * 0.01})`);
-        grad.addColorStop(1, "rgba(184, 242, 74, 0)");
-        ctx.fillStyle = grad;
-        ctx.beginPath();
-        ctx.moveTo(0, y);
-        for (let x = 0; x <= w; x += 24) {
-          const yy =
-            y +
-            Math.sin(x * 0.004 + t * 1.2 + i) * 28 +
-            Math.cos(x * 0.002 - t + i) * 18;
-          ctx.lineTo(x, yy);
+      for (const well of wells) {
+        const dx = reduce ? 0 : Math.sin(t * well.speed + well.phase) * w * 0.035;
+        const dy = reduce ? 0 : Math.cos(t * well.speed * 0.9 + well.phase) * h * 0.028;
+        const cx = well.x * w + dx;
+        const cy = well.y * h + dy;
+        const pulse = reduce ? 1 : 0.94 + Math.sin(t * 0.35 + well.phase) * 0.06;
+        const radius = well.r * Math.max(w, h) * pulse;
+
+        const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, radius);
+        if (well.kind === 0) {
+          g.addColorStop(0, "rgba(184, 242, 74, 0.11)");
+          g.addColorStop(0.3, "rgba(100, 160, 60, 0.045)");
+          g.addColorStop(0.7, "rgba(40, 80, 50, 0.02)");
+          g.addColorStop(1, "rgba(0, 0, 0, 0)");
+        } else {
+          g.addColorStop(0, "rgba(70, 130, 90, 0.12)");
+          g.addColorStop(0.35, "rgba(35, 75, 55, 0.05)");
+          g.addColorStop(1, "rgba(0, 0, 0, 0)");
         }
-        ctx.lineTo(w, y + 120);
-        ctx.lineTo(0, y + 120);
-        ctx.closePath();
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        ctx.arc(cx, cy, radius, 0, Math.PI * 2);
         ctx.fill();
       }
       ctx.restore();
 
-      if (!reduce) {
-        for (const n of nodes) {
-          n.x += n.vx + Math.sin(t + n.phase) * 0.05;
-          n.y += n.vy + Math.cos(t * 0.8 + n.phase) * 0.04;
-          if (n.x < -20) n.x = w + 20;
-          if (n.x > w + 20) n.x = -20;
-          if (n.y < -20) n.y = h + 20;
-          if (n.y > h + 20) n.y = -20;
-        }
-      }
+      // Soft ground plane wash (editorial, not tech)
+      const groundY = h * 0.78;
+      const ground = ctx.createLinearGradient(0, groundY - 100, 0, h);
+      ground.addColorStop(0, "rgba(20, 40, 28, 0)");
+      ground.addColorStop(0.4, "rgba(25, 50, 35, 0.1)");
+      ground.addColorStop(1, "rgba(8, 14, 10, 0.35)");
+      ctx.fillStyle = ground;
+      ctx.fillRect(0, groundY - 100, w, h - groundY + 100);
 
-      // edges — evidence lattice
-      const linkDist = Math.min(180, w * 0.14);
-      ctx.lineWidth = 1;
-      for (let i = 0; i < nodes.length; i++) {
-        for (let j = i + 1; j < nodes.length; j++) {
-          const d = dist(nodes[i], nodes[j]);
-          if (d > linkDist) continue;
-          const alpha = (1 - d / linkDist) * 0.18;
-          ctx.strokeStyle = `rgba(184, 242, 74, ${alpha})`;
-          ctx.beginPath();
-          ctx.moveTo(nodes[i].x, nodes[i].y);
-          ctx.lineTo(nodes[j].x, nodes[j].y);
-          ctx.stroke();
-        }
-      }
+      // Occasional verification seal (soft ring only — not a network)
+      if (!reduce && tick % 240 === 40) spawnSeal();
 
-      // traveling verification pulses
-      if (!reduce) {
-        for (const pulse of pulses) {
-          pulse.p += pulse.speed;
-          if (pulse.p > 1) {
-            pulse.p = 0;
-            pulse.from = pulse.to;
-            pulse.to = Math.floor(Math.random() * nodes.length);
-          }
-          const a = nodes[pulse.from];
-          const b = nodes[pulse.to];
-          if (!a || !b) continue;
-          const x = a.x + (b.x - a.x) * pulse.p;
-          const y = a.y + (b.y - a.y) * pulse.p;
-          const glow = ctx.createRadialGradient(x, y, 0, x, y, 10);
-          glow.addColorStop(0, "rgba(184, 242, 74, 0.85)");
-          glow.addColorStop(0.4, "rgba(184, 242, 74, 0.25)");
-          glow.addColorStop(1, "rgba(184, 242, 74, 0)");
-          ctx.fillStyle = glow;
-          ctx.beginPath();
-          ctx.arc(x, y, 10, 0, Math.PI * 2);
-          ctx.fill();
-        }
-      }
-
-      // nodes
-      for (const n of nodes) {
-        const pulse = 0.65 + Math.sin(t * 2 + n.phase) * 0.35;
-        if (n.kind === "claim") {
-          ctx.fillStyle = `rgba(242, 247, 240, ${0.55 * pulse})`;
-        } else if (n.kind === "proof") {
-          ctx.fillStyle = `rgba(184, 242, 74, ${0.75 * pulse})`;
-        } else {
-          ctx.fillStyle = `rgba(138, 154, 140, ${0.45 * pulse})`;
-        }
+      for (const seal of seals) {
+        if (!reduce) seal.age += 0.65;
+        const life = 1 - seal.age / seal.max;
+        if (life <= 0) continue;
+        const r = seal.age;
+        const a = Math.max(0, life) * 0.12;
+        ctx.strokeStyle = `rgba(184, 242, 74, ${a})`;
+        ctx.lineWidth = 1.5;
         ctx.beginPath();
-        ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.arc(seal.x, seal.y, r, 0, Math.PI * 2);
+        ctx.stroke();
 
-        if (n.kind === "proof") {
-          ctx.strokeStyle = `rgba(184, 242, 74, ${0.2 * pulse})`;
-          ctx.lineWidth = 1;
-          ctx.beginPath();
-          ctx.arc(n.x, n.y, n.r + 4 + pulse * 2, 0, Math.PI * 2);
-          ctx.stroke();
-        }
+        const core = ctx.createRadialGradient(seal.x, seal.y, 0, seal.x, seal.y, r * 0.25);
+        core.addColorStop(0, `rgba(184, 242, 74, ${a * 0.4})`);
+        core.addColorStop(1, "rgba(0,0,0,0)");
+        ctx.fillStyle = core;
+        ctx.beginPath();
+        ctx.arc(seal.x, seal.y, Math.max(1, r * 0.25), 0, Math.PI * 2);
+        ctx.fill();
       }
+      seals = seals.filter((s) => s.age < s.max);
+
+      // Film grain overlay
+      if (grainPattern) {
+        ctx.save();
+        ctx.globalAlpha = 0.045;
+        ctx.globalCompositeOperation = "overlay";
+        ctx.fillStyle = grainPattern;
+        ctx.fillRect(0, 0, w, h);
+        ctx.restore();
+      }
+
+      // Vignette for depth (magazine / product site)
+      const vig = ctx.createRadialGradient(
+        w * 0.5,
+        h * 0.4,
+        Math.min(w, h) * 0.2,
+        w * 0.5,
+        h * 0.5,
+        Math.max(w, h) * 0.75,
+      );
+      vig.addColorStop(0, "rgba(0,0,0,0)");
+      vig.addColorStop(1, "rgba(0,0,0,0.45)");
+      ctx.fillStyle = vig;
+      ctx.fillRect(0, 0, w, h);
+
+      // Nav legibility band
+      const top = ctx.createLinearGradient(0, 0, 0, 100);
+      top.addColorStop(0, "rgba(6, 10, 8, 0.5)");
+      top.addColorStop(1, "rgba(6, 10, 8, 0)");
+      ctx.fillStyle = top;
+      ctx.fillRect(0, 0, w, 100);
 
       raf = requestAnimationFrame(frame);
     };
 
     resize();
+    if (!reduce) spawnSeal();
     window.addEventListener("resize", resize);
     raf = requestAnimationFrame(frame);
 
@@ -216,11 +203,5 @@ export function FlowField() {
     };
   }, []);
 
-  return (
-    <canvas
-      ref={ref}
-      className="flow-field"
-      aria-hidden
-    />
-  );
+  return <canvas ref={ref} className="flow-field" aria-hidden />;
 }
