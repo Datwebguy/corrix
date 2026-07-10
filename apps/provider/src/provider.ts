@@ -1,6 +1,10 @@
 /**
  * Corrix CAP Provider, live worker
  *
+ * Handles both:
+ * - Structured A2A hires (claim + sources JSON)
+ * - CROO Agent Store chat hires (often empty requirements / missed order_paid)
+ *
  * SDK: AgentClient, connectWebSocket, acceptNegotiation, getOrder,
  * getNegotiation, deliverOrder, rejectOrder, EventType.*
  */
@@ -11,6 +15,7 @@ import {
   parseRequirements,
   verifyClaim,
   type VerifyReceipt,
+  type VerifyRequest,
 } from "@corrix/core";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -23,6 +28,31 @@ const LOCAL = process.env.LOCAL === "1" || process.env.LOCAL === "true"
 /** Prevent concurrent double-delivery on the same order */
 const inFlight = new Set<string>();
 const delivered = new Set<string>();
+/** Polls already scheduled for order_created → paid recovery */
+const polling = new Set<string>();
+
+const PAID_STATUSES = new Set([
+  "paid",
+  "delivering",
+  "Paid",
+  "Delivering",
+]);
+
+const TERMINAL_STATUSES = new Set([
+  "completed",
+  "rejected",
+  "expired",
+  "pay_failed",
+  "deliver_failed",
+  "create_failed",
+  "Completed",
+  "Rejected",
+  "Expired",
+]);
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((r) => setTimeout(r, ms));
+}
 
 function printReceipt(receipt: VerifyReceipt): void {
   console.log(`Verdict:     ${receipt.verdict.toUpperCase()}`);
@@ -36,35 +66,105 @@ function printReceipt(receipt: VerifyReceipt): void {
   }
 }
 
+function isEmptyReq(v: unknown): boolean {
+  if (v == null) return true;
+  if (typeof v === "string") return v.trim() === "" || v.trim() === "{}";
+  if (Array.isArray(v)) return v.length === 0;
+  if (typeof v === "object") {
+    const o = v as Record<string, unknown>;
+    return Object.keys(o).length === 0;
+  }
+  return false;
+}
+
 /**
  * Pull requirements from Order / Negotiation shapes returned by the SDK.
- * Order typings may omit requirements; runtime + negotiation fallback cover it.
+ * Store chat hires often leave requirements empty — we still return something
+ * usable (never throw solely for missing fields).
  */
-function extractRequirements(
+function extractRequirementsRaw(
   order: Record<string, unknown>,
   negotiation?: Record<string, unknown> | null,
 ): unknown {
   const candidates: unknown[] = [
+    negotiation?.requirements,
+    negotiation?.Requirements,
     order.requirements,
     order.Requirements,
     order.requirement,
     (order.data as Record<string, unknown> | undefined)?.requirements,
-    negotiation?.requirements,
-    negotiation?.Requirements,
+    negotiation?.metadata,
+    order.metadata,
+    (negotiation as { message?: unknown } | null)?.message,
+    (order as { input?: unknown }).input,
+    (order as { description?: unknown }).description,
   ];
 
   for (const c of candidates) {
-    if (c != null && c !== "") return c;
+    if (!isEmptyReq(c)) return c;
   }
 
   // Last resort: scan keys
-  for (const [k, v] of Object.entries(order)) {
-    if (k.toLowerCase().includes("require") && v != null && v !== "") return v;
+  for (const src of [order, negotiation].filter(Boolean) as Record<string, unknown>[]) {
+    for (const [k, v] of Object.entries(src)) {
+      if (
+        /require|claim|input|payload|body|prompt|query|message/i.test(k) &&
+        !isEmptyReq(v)
+      ) {
+        return v;
+      }
+    }
   }
 
-  throw new Error(
-    "Order has no requirements field, cannot verify. Ensure hire sends claim/sources JSON.",
+  return null;
+}
+
+/**
+ * Build a VerifyRequest that always works for Store-style empty hires.
+ * Honest "unclear" when no claim/sources — still deliverable so orders complete.
+ */
+function toVerifyRequest(
+  raw: unknown,
+  order: Record<string, unknown>,
+  negotiation?: Record<string, unknown> | null,
+): VerifyRequest {
+  if (raw != null && !isEmptyReq(raw)) {
+    try {
+      return parseRequirements(raw);
+    } catch (err) {
+      // Free-text or partial payload from Store chat
+      if (typeof raw === "string" && raw.trim().length >= 3) {
+        return {
+          claim: raw.trim().slice(0, 2000),
+          sources: ["(no structured sources — free-text hire from Agent Store)"],
+          context: "store_hire_freetext",
+        };
+      }
+      console.warn(
+        "[order] parse failed, using store fallback:",
+        err instanceof Error ? err.message : err,
+      );
+    }
+  }
+
+  // Try to invent a short claim from service/order ids for audit trail
+  const serviceId = String(
+    order.serviceId ?? order.service_id ?? negotiation?.serviceId ?? "",
+  ).slice(0, 8);
+  const orderId = String(order.orderId ?? order.order_id ?? "").slice(0, 8);
+
+  console.log(
+    `[order] empty requirements (Store hire) · service~${serviceId || "?"} order~${orderId || "?"} · delivering honest unclear receipt`,
   );
+
+  return {
+    claim:
+      "Agent Store hire did not attach a claim or sources. Corrix cannot corroborate a specific statement without input from the requester.",
+    sources: [
+      "(no sources provided — CROO Agent Store hire UI did not send requirements)",
+    ],
+    context: "store_hire_empty_requirements",
+  };
 }
 
 export async function runLocal(): Promise<void> {
@@ -86,6 +186,13 @@ export async function runLocal(): Promise<void> {
 
   const receipt = await verifyClaim(sample);
   printReceipt(receipt);
+
+  // Store-empty path smoke test
+  const empty = await verifyClaim(
+    toVerifyRequest(null, { orderId: "local-test" }, null),
+  );
+  console.log("\nStore-empty path:", empty.verdict, empty.confidence);
+
   console.log("\n✓ Local engine OK. Use npm run provider (with CROO_SDK_KEY) for live CAP.");
 }
 
@@ -109,43 +216,75 @@ export async function runLive(): Promise<void> {
   console.log("║   Corrix  ·  CAP provider online     ║");
   console.log("╚══════════════════════════════════════╝");
   console.log(`API: ${baseURL}`);
-  console.log("Listening for negotiations & paid orders…\n");
+  console.log("Listening for negotiations & paid orders…");
+  console.log("Store hires: empty requirements → honest unclear receipt; poll if order_paid missed\n");
 
-  stream.on(EventType.NegotiationCreated, async (e: { negotiation_id?: string }) => {
-    const negotiationId = e.negotiation_id;
-    if (!negotiationId) return;
+  async function deliverReceipt(orderId: string, receipt: VerifyReceipt): Promise<boolean> {
+    const schemaJson = JSON.stringify(receipt);
     try {
-      console.log(`[neg] accept ${negotiationId}`);
-      const result = await client.acceptNegotiation(negotiationId);
-      const orderId =
-        result?.order?.orderId ??
-        (result as { orderId?: string })?.orderId ??
-        "(created)";
-      console.log(`[neg] order ${orderId}`);
-    } catch (err) {
-      console.error("[neg] accept failed", err instanceof Error ? err.message : err);
+      const result = await client.deliverOrder(orderId, {
+        deliverableType: DeliverableType.Schema,
+        deliverableSchema: schemaJson,
+      });
+      console.log(
+        `[order] delivered ${orderId} · schema · tx ${result?.txHash ?? "ok"} · ${receipt.verdict} · ${receipt.contentHash.slice(0, 12)}…\n`,
+      );
+      return true;
+    } catch (schemaErr) {
+      console.warn(
+        `[order] schema deliver failed, trying text:`,
+        schemaErr instanceof Error ? schemaErr.message : schemaErr,
+      );
+      const result = await client.deliverOrder(orderId, {
+        deliverableType: DeliverableType.Text,
+        deliverableText: schemaJson,
+      });
+      console.log(
+        `[order] delivered ${orderId} · text · tx ${result?.txHash ?? "ok"} · ${receipt.verdict} · ${receipt.contentHash.slice(0, 12)}…\n`,
+      );
+      return true;
     }
-  });
+  }
 
-  stream.on(EventType.OrderPaid, async (e: { order_id?: string; negotiation_id?: string }) => {
-    const orderId = e.order_id;
-    if (!orderId) return;
-
+  /**
+   * Fulfill a paid order: extract or synthesize requirements → verify → deliver.
+   * Never hang forever for missing claim form.
+   * @param forcePaid — true when OrderPaid WS event already confirmed payment
+   */
+  async function fulfillPaidOrder(
+    orderId: string,
+    negotiationIdHint?: string,
+    forcePaid = false,
+  ): Promise<void> {
     if (delivered.has(orderId) || inFlight.has(orderId)) {
       console.log(`[order] skip ${orderId} (already handled)`);
       return;
     }
     inFlight.add(orderId);
 
-    console.log(`[order] paid ${orderId}, verifying…`);
+    console.log(`[order] fulfill ${orderId}, verifying…`);
     try {
       const order = (await client.getOrder(orderId)) as unknown as Record<string, unknown>;
+      const status = String(order.status ?? "");
+      const statusLower = status.toLowerCase();
+      const paid =
+        forcePaid ||
+        PAID_STATUSES.has(status) ||
+        statusLower === "paid" ||
+        statusLower === "delivering" ||
+        Boolean(order.paidAt) ||
+        Boolean(order.payTxHash);
+
+      if (!paid) {
+        console.log(`[order] ${orderId} status=${status} not paid yet, skip fulfill`);
+        return;
+      }
 
       let negotiation: Record<string, unknown> | null = null;
       const negotiationId =
         (order.negotiationId as string | undefined) ??
         (order.negotiation_id as string | undefined) ??
-        e.negotiation_id;
+        negotiationIdHint;
 
       if (negotiationId) {
         try {
@@ -154,57 +293,17 @@ export async function runLive(): Promise<void> {
             unknown
           >;
         } catch {
-          /* optional fallback */
+          /* optional */
         }
       }
 
-      let receipt: VerifyReceipt;
-      try {
-        const raw = extractRequirements(order, negotiation);
-        const req = parseRequirements(raw);
-        receipt = await verifyClaim(req);
-      } catch (parseErr) {
-        const reason = parseErr instanceof Error ? parseErr.message : "invalid requirements";
-        console.error(`[order] reject ${orderId}: ${reason}`);
-        await client.rejectOrder(orderId, reason);
-        return;
-      }
-
+      const raw = extractRequirementsRaw(order, negotiation);
+      const req = toVerifyRequest(raw, order, negotiation);
+      const receipt = await verifyClaim(req);
       printReceipt(receipt);
 
-      // SDK DeliverOrderRequest: deliverableSchema must be a string
-      const schemaJson = JSON.stringify(receipt);
-      let deliveredOk = false;
-
-      try {
-        const result = await client.deliverOrder(orderId, {
-          deliverableType: DeliverableType.Schema,
-          deliverableSchema: schemaJson,
-        });
-        console.log(
-          `[order] delivered ${orderId} · schema · tx ${result?.txHash ?? "ok"} · ${receipt.verdict} · ${receipt.contentHash.slice(0, 12)}…\n`,
-        );
-        deliveredOk = true;
-      } catch (schemaErr) {
-        console.warn(
-          `[order] schema deliver failed, trying text:`,
-          schemaErr instanceof Error ? schemaErr.message : schemaErr,
-        );
-        try {
-          const result = await client.deliverOrder(orderId, {
-            deliverableType: DeliverableType.Text,
-            deliverableText: schemaJson,
-          });
-          console.log(
-            `[order] delivered ${orderId} · text · tx ${result?.txHash ?? "ok"} · ${receipt.verdict} · ${receipt.contentHash.slice(0, 12)}…\n`,
-          );
-          deliveredOk = true;
-        } catch (textErr) {
-          throw textErr;
-        }
-      }
-
-      if (deliveredOk) delivered.add(orderId);
+      const ok = await deliverReceipt(orderId, receipt);
+      if (ok) delivered.add(orderId);
     } catch (err) {
       console.error(`[order] handle failed ${orderId}`, err instanceof Error ? err.message : err);
       try {
@@ -218,10 +317,110 @@ export async function runLive(): Promise<void> {
     } finally {
       inFlight.delete(orderId);
     }
+  }
+
+  /**
+   * Store / CAP sometimes drop order_paid WS events.
+   * Poll order status after create and fulfill when paid.
+   */
+  function schedulePaidPoll(orderId: string, negotiationId?: string): void {
+    if (!orderId || orderId === "(created)" || polling.has(orderId) || delivered.has(orderId)) {
+      return;
+    }
+    polling.add(orderId);
+
+    void (async () => {
+      console.log(`[poll] watch paid status for ${orderId}`);
+      // ~5 minutes: 60 × 5s
+      for (let i = 0; i < 60; i++) {
+        if (delivered.has(orderId)) {
+          console.log(`[poll] ${orderId} already delivered, stop`);
+          return;
+        }
+        try {
+          const order = await client.getOrder(orderId);
+          const status = String(order.status ?? "");
+          const paid =
+            PAID_STATUSES.has(status) ||
+            Boolean(order.paidAt) ||
+            Boolean(order.payTxHash);
+
+          if (paid) {
+            console.log(`[poll] ${orderId} is paid (status=${status}), fulfilling`);
+            await fulfillPaidOrder(orderId, negotiationId ?? order.negotiationId, true);
+            return;
+          }
+
+          if (TERMINAL_STATUSES.has(status)) {
+            console.log(`[poll] ${orderId} terminal status=${status}, stop`);
+            return;
+          }
+
+          if (i === 0 || i % 6 === 0) {
+            console.log(`[poll] ${orderId} status=${status} (attempt ${i + 1}/60)`);
+          }
+        } catch (err) {
+          console.warn(
+            `[poll] getOrder ${orderId} failed:`,
+            err instanceof Error ? err.message : err,
+          );
+        }
+        await sleep(5000);
+      }
+      console.warn(`[poll] ${orderId} timed out waiting for paid`);
+    })().finally(() => {
+      polling.delete(orderId);
+    });
+  }
+
+  stream.on(EventType.NegotiationCreated, async (e: { negotiation_id?: string }) => {
+    const negotiationId = e.negotiation_id;
+    if (!negotiationId) return;
+    try {
+      console.log(`[neg] accept ${negotiationId}`);
+      const result = await client.acceptNegotiation(negotiationId);
+      const orderId =
+        result?.order?.orderId ??
+        (result as { orderId?: string })?.orderId ??
+        "(created)";
+      console.log(`[neg] order ${orderId}`);
+
+      if (orderId && orderId !== "(created)") {
+        // Start poll early — Store may pay without emitting order_paid to us
+        schedulePaidPoll(orderId, negotiationId);
+      }
+    } catch (err) {
+      console.error("[neg] accept failed", err instanceof Error ? err.message : err);
+    }
+  });
+
+  stream.on(EventType.OrderPaid, async (e: { order_id?: string; negotiation_id?: string }) => {
+    const orderId = e.order_id;
+    if (!orderId) return;
+    console.log(`[event] order_paid ${orderId}`);
+    await fulfillPaidOrder(orderId, e.negotiation_id, true);
+  });
+
+  stream.on(EventType.OrderCreated, async (e: { order_id?: string; negotiation_id?: string }) => {
+    const orderId = e.order_id;
+    if (!orderId) return;
+    console.log(`[event] order_created ${orderId}`);
+    schedulePaidPoll(orderId, e.negotiation_id);
+
+    // If already paid by the time we see create, fulfill immediately
+    try {
+      const order = await client.getOrder(orderId);
+      const status = String(order.status ?? "");
+      if (PAID_STATUSES.has(status) || order.paidAt || order.payTxHash) {
+        console.log(`[event] order_created but already paid ${orderId}`);
+        await fulfillPaidOrder(orderId, e.negotiation_id ?? order.negotiationId);
+      }
+    } catch {
+      /* poll will retry */
+    }
   });
 
   for (const ev of [
-    EventType.OrderCreated,
     EventType.OrderCompleted,
     EventType.OrderRejected,
     EventType.OrderExpired,
@@ -232,6 +431,22 @@ export async function runLive(): Promise<void> {
       const id = e?.order_id ?? e?.negotiation_id ?? "";
       console.log(`[event] ${String(ev)}${id ? ` ${id}` : ""}`);
     });
+  }
+
+  // Catch-up: any already-paid open orders (e.g. provider restarted mid-hire)
+  try {
+    const open = await client.listOrders({ status: "paid", pageSize: 20 });
+    for (const o of open ?? []) {
+      if (o.orderId && !delivered.has(o.orderId)) {
+        console.log(`[catchup] paid order ${o.orderId}`);
+        await fulfillPaidOrder(o.orderId, o.negotiationId);
+      }
+    }
+  } catch (err) {
+    console.warn(
+      "[catchup] listOrders paid skipped:",
+      err instanceof Error ? err.message : err,
+    );
   }
 
   process.on("SIGINT", () => {

@@ -37,7 +37,23 @@ export function parseRequirements(raw: unknown): VerifyRequest {
     }
   }
 
-  const claim = String(obj.claim ?? obj.statement ?? obj.text ?? "").trim();
+  // Accept common Store / chat aliases
+  let claim = String(
+    obj.claim ??
+      obj.statement ??
+      obj.text ??
+      obj.query ??
+      obj.prompt ??
+      obj.input ??
+      obj.message ??
+      "",
+  ).trim();
+
+  // Nested { content: "..." } style payloads
+  if (claim.length < 8 && obj.content != null) {
+    claim = String(obj.content).trim();
+  }
+
   if (claim.length < 8) {
     throw new Error("claim is required (min 8 characters)");
   }
@@ -49,6 +65,8 @@ export function parseRequirements(raw: unknown): VerifyRequest {
     sources = [obj.sources.trim()];
   } else if (typeof obj.source === "string" && obj.source.trim()) {
     sources = [obj.source.trim()];
+  } else if (Array.isArray(obj.evidence)) {
+    sources = obj.evidence.map((s) => String(s).trim()).filter(Boolean);
   }
 
   if (sources.length === 0) {
@@ -59,6 +77,11 @@ export function parseRequirements(raw: unknown): VerifyRequest {
     claim,
     sources,
     context: obj.context != null ? String(obj.context) : undefined,
-    deliverable: obj.deliverable != null ? String(obj.deliverable) : undefined,
+    deliverable:
+      obj.deliverable != null
+        ? String(obj.deliverable)
+        : obj.output != null
+          ? String(obj.output)
+          : undefined,
   };
 }
