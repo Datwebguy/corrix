@@ -43,9 +43,12 @@ export function FlowField({ mode = "dual", className = "flow-field" }: FlowField
     let particles: Particle[] = [];
 
     const seed = () => {
-      const density = mode === "dual" ? 700 : 1100;
-      const count = Math.min(density, Math.floor((w * h) / (mode === "dual" ? 1100 : 850)));
-      particles = Array.from({ length: count }, (_, i) => ({
+      // Cap particle count by content band area so zoom-out (huge CSS width) stays dense, not sparse
+      const col = Math.min(1140, Math.max(320, w - 48));
+      const density = mode === "dual" ? 720 : 1000;
+      const area = col * Math.min(h, 900);
+      const count = Math.min(density, Math.floor(area / (mode === "dual" ? 900 : 700)));
+      particles = Array.from({ length: Math.max(200, count) }, (_, i) => ({
         s: Math.random(),
         phase: i % 2,
         size: 0.55 + Math.random() * 2.5,
@@ -67,23 +70,35 @@ export function FlowField({ mode = "dual", className = "flow-field" }: FlowField
       seed();
     };
 
-    /** Vertical helix on left (0) or right (1) */
+    /**
+     * Content column (matches CSS --max). Spirals frame THIS box, not the
+     * full browser width — critical at low zoom / ultra-wide viewports.
+     */
+    const contentBox = () => {
+      const max = 1140;
+      const col = Math.min(max, Math.max(320, w - 48));
+      const left = (w - col) / 2;
+      return { col, left, right: left + col };
+    };
+
+    /** Vertical helix on left (0) or right (1) of the content column */
     const dualHelix = (s: number, strand: number, time: number, side: number) => {
       const scroll = reduce ? 0 : time * 0.08;
       const u = (s + scroll) % 1;
-      // Mirror sides: left ~22%, right ~78%
-      const baseX = side === 0 ? w * 0.18 : w * 0.82;
-      const drift = Math.sin(time * 0.15 + side) * w * 0.02;
-      const pathX = baseX + drift + Math.sin(u * Math.PI * 2 + side) * w * 0.012;
+      const { col, left, right } = contentBox();
+
+      // Sit just outside the content band so copy stays clear
+      const baseX = side === 0 ? left - col * 0.02 : right + col * 0.02;
+      const drift = Math.sin(time * 0.15 + side) * Math.min(28, col * 0.02);
+      const pathX = baseX + drift + Math.sin(u * Math.PI * 2 + side) * Math.min(18, col * 0.015);
       const pathY = h * (0.06 + u * 0.92);
 
       const radius =
-        Math.min(w, h) *
-        (0.07 + 0.055 * Math.sin(u * Math.PI)) *
+        Math.min(col, h) *
+        (0.11 + 0.06 * Math.sin(u * Math.PI)) *
         (0.9 + 0.1 * Math.sin(time * 0.2 + side));
 
       const turns = 4.2;
-      // Opposite roll direction per side for balance
       const dir = side === 0 ? -1 : 1;
       const angle =
         u * Math.PI * 2 * turns * dir +
@@ -160,21 +175,12 @@ export function FlowField({ mode = "dual", className = "flow-field" }: FlowField
       ctx.fillStyle = bg;
       ctx.fillRect(0, 0, w, h);
 
-      // Dual blooms (left + right) or single diagonal bloom for slant
+      // Dual blooms frame the content column (not full ultra-wide edges)
       if (mode === "dual") {
-        for (const [bx, by] of [
-          [0.2, 0.45],
-          [0.8, 0.5],
-        ] as const) {
-          const bloom = ctx.createRadialGradient(
-            w * bx,
-            h * by,
-            0,
-            w * bx,
-            h * by,
-            Math.min(w, h) * 0.38,
-          );
-          bloom.addColorStop(0, "rgba(184, 242, 74, 0.11)");
+        const { col, left, right } = contentBox();
+        for (const bx of [left + col * 0.08, right - col * 0.08]) {
+          const bloom = ctx.createRadialGradient(bx, h * 0.48, 0, bx, h * 0.48, col * 0.42);
+          bloom.addColorStop(0, "rgba(184, 242, 74, 0.1)");
           bloom.addColorStop(0.45, "rgba(100, 160, 50, 0.04)");
           bloom.addColorStop(1, "rgba(0,0,0,0)");
           ctx.fillStyle = bloom;
