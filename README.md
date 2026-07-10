@@ -6,10 +6,11 @@
 
 | | |
 |--|--|
+| **Live site** | [corrix.xyz](https://corrix.xyz) |
 | **Repository** | [github.com/Datwebguy/corrix](https://github.com/Datwebguy/corrix) |
 | **Agent Store** | [agent.croo.network](https://agent.croo.network) |
+| **CAP provider health** | [corrix-provider.fly.dev/health](https://corrix-provider.fly.dev/health) |
 | **Protocol** | [CROO Agent Protocol (CAP)](https://cap.croo.network/) |
-| **Docs (product site)** | `/docs` in the web app · this README |
 | **License** | [MIT](./LICENSE) |
 | **Stack** | Node 18+ · TypeScript · `@croo-network/sdk` · React · Vite · Framer Motion |
 | **Settlement** | USDC on **Base** via CAP escrow |
