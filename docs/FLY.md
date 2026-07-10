@@ -9,6 +9,7 @@ The CAP provider is a long-lived Node process. It must run **24/7** so Corrix st
 | **App name** | `corrix-provider` |
 | **Health** | https://corrix-provider.fly.dev/health |
 | **Region** | `iad` (US East) |
+| **Memory** | **512MB** (256MB OOMed under tsx + SDK) |
 | **Auto-stop** | **off** (`min_machines_running = 1`) |
 
 ## Secrets (never commit)

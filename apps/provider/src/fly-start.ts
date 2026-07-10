@@ -1,13 +1,10 @@
 /**
- * Fly entry: tiny HTTP health server + CAP provider.
- * Health keeps the machine checkable; provider is the real work.
+ * Fly entry: single Node process — HTTP health + CAP provider (no child spawn).
+ * Dual processes + tsx under 256MB were OOM-killed repeatedly.
  */
 import { createServer } from "node:http";
-import { spawn } from "node:child_process";
-import { fileURLToPath } from "node:url";
-import { dirname, resolve } from "node:path";
+import { runLive } from "./provider.ts";
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
 const port = Number(process.env.PORT || 8080);
 
 let providerReady = false;
@@ -15,6 +12,7 @@ let lastError: string | null = null;
 
 const server = createServer((req, res) => {
   if (req.url === "/health" || req.url === "/") {
+    // Process is up if we can answer. Surface CAP connect state for ops.
     const ok = providerReady && !lastError;
     res.writeHead(ok ? 200 : 503, { "content-type": "application/json" });
     res.end(
@@ -31,35 +29,27 @@ const server = createServer((req, res) => {
   res.end("not found");
 });
 
-server.listen(port, "0.0.0.0", () => {
-  console.log(`[fly] health listening on :${port}`);
+await new Promise<void>((resolve) => {
+  server.listen(port, "0.0.0.0", () => {
+    console.log(`[fly] health listening on :${port}`);
+    resolve();
+  });
 });
 
-const providerEntry = resolve(__dirname, "provider.ts");
-const child = spawn("npx", ["tsx", providerEntry], {
-  stdio: "inherit",
-  env: process.env,
-  shell: true,
-  cwd: resolve(__dirname, "../../.."),
-});
-
-providerReady = true;
-
-child.on("error", (err) => {
-  lastError = err.message;
+try {
+  // Mark ready as soon as listen works; CAP connect is async but process is live.
+  // Health checks must not kill us while WebSocket is connecting.
+  providerReady = true;
+  await runLive();
+} catch (err) {
+  lastError = err instanceof Error ? err.message : String(err);
   providerReady = false;
-  console.error("[fly] provider failed to start", err);
-});
-
-child.on("exit", (code, signal) => {
-  providerReady = false;
-  lastError = `provider exited code=${code} signal=${signal}`;
-  console.error("[fly]", lastError);
-  // Exit so Fly restarts the machine
-  process.exit(code ?? 1);
-});
+  console.error("[fly] provider failed", lastError);
+  // Keep health server up briefly so logs are readable, then exit for Fly restart
+  setTimeout(() => process.exit(1), 2000);
+}
 
 process.on("SIGTERM", () => {
-  child.kill("SIGTERM");
   server.close();
+  process.exit(0);
 });

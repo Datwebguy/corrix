@@ -15,6 +15,8 @@ COPY apps/provider ./apps/provider
 
 ENV NODE_ENV=production
 ENV PORT=8080
+# Cap V8 heap so the process stays under machine RAM (see fly.toml memory)
+ENV NODE_OPTIONS=--max-old-space-size=384
 
-# Health endpoint for Fly + CAP provider process
+# Single process: health HTTP + CAP provider (fly-start imports provider, no child)
 CMD ["npx", "tsx", "apps/provider/src/fly-start.ts"]

@@ -67,7 +67,7 @@ function extractRequirements(
   );
 }
 
-async function runLocal(): Promise<void> {
+export async function runLocal(): Promise<void> {
   console.log("╔══════════════════════════════════════╗");
   console.log("║   Corrix  ·  local engine mode       ║");
   console.log("╚══════════════════════════════════════╝");
@@ -89,7 +89,7 @@ async function runLocal(): Promise<void> {
   console.log("\n✓ Local engine OK. Use npm run provider (with CROO_SDK_KEY) for live CAP.");
 }
 
-async function runLive(): Promise<void> {
+export async function runLive(): Promise<void> {
   const sdkKey = process.env.CROO_SDK_KEY?.trim();
   if (!sdkKey) {
     console.error("Missing CROO_SDK_KEY. Copy .env.example → .env");
@@ -246,14 +246,20 @@ async function runLive(): Promise<void> {
   });
 }
 
-if (LOCAL) {
-  runLocal().catch((e) => {
-    console.error(e);
-    process.exit(1);
-  });
-} else {
-  runLive().catch((e) => {
-    console.error(e);
-    process.exit(1);
-  });
+/** Only auto-start when this file is the process entry (not when Fly imports it). */
+const entry = (process.argv[1] ?? "").replace(/\\/g, "/");
+const launchedAsProvider = /\/provider\.[cm]?[jt]s$/.test(entry);
+
+if (launchedAsProvider) {
+  if (LOCAL) {
+    runLocal().catch((e) => {
+      console.error(e);
+      process.exit(1);
+    });
+  } else {
+    runLive().catch((e) => {
+      console.error(e);
+      process.exit(1);
+    });
+  }
 }
