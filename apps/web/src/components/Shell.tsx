@@ -144,42 +144,44 @@ export function Shell() {
       </main>
 
       <footer className="site-footer">
-        <div className="container footer-grid">
-          <div>
+        <div className="container footer-inner">
+          <div className="footer-brand">
             <LogoWord compact />
             <p className="footer-tag">{SITE.tagline}</p>
           </div>
-          <div className="footer-col">
-            <h4>Product</h4>
-            <Link to="/console">Console</Link>
-            <Link to="/docs">Documentation</Link>
-            <a href={SITE.agentStore} target="_blank" rel="noreferrer">
-              Agent Store
-            </a>
+          <div className="footer-links-grid">
+            <div className="footer-col">
+              <h4>Product</h4>
+              <Link to="/console">Console</Link>
+              <Link to="/docs">Documentation</Link>
+              <a href={SITE.agentStore} target="_blank" rel="noreferrer">
+                Agent Store
+              </a>
+            </div>
+            <div className="footer-col">
+              <h4>Company</h4>
+              <Link to="/about">About</Link>
+              <Link to="/faq">FAQ</Link>
+              <a href={SITE.github} target="_blank" rel="noreferrer">
+                GitHub
+              </a>
+            </div>
+            <div className="footer-col">
+              <h4>Protocol</h4>
+              <a href={SITE.capDocs} target="_blank" rel="noreferrer">
+                CAP docs
+              </a>
+              <a href={SITE.croo} target="_blank" rel="noreferrer">
+                CROO Network
+              </a>
+            </div>
           </div>
-          <div className="footer-col">
-            <h4>Company</h4>
-            <Link to="/about">About</Link>
-            <Link to="/faq">FAQ</Link>
-            <a href={SITE.github} target="_blank" rel="noreferrer">
-              GitHub
-            </a>
+          <div className="footer-bottom">
+            <span>© {new Date().getFullYear()} Corrix. MIT licensed.</span>
+            <span className="footer-live">
+              <span className="live-dot" /> Online verification agent
+            </span>
           </div>
-          <div className="footer-col">
-            <h4>Protocol</h4>
-            <a href={SITE.capDocs} target="_blank" rel="noreferrer">
-              CAP docs
-            </a>
-            <a href={SITE.croo} target="_blank" rel="noreferrer">
-              CROO Network
-            </a>
-          </div>
-        </div>
-        <div className="container footer-bottom">
-          <span>© {new Date().getFullYear()} Corrix. MIT licensed.</span>
-          <span className="footer-live">
-            <span className="live-dot" /> Online verification agent
-          </span>
         </div>
       </footer>
     </div>
