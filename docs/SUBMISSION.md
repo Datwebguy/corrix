@@ -1,4 +1,4 @@
-# Corrix — CROO submission checklist
+# Corrix, CROO submission checklist
 
 **Deadline:** 2026-07-12 09:00 (confirm timezone on DoraHacks)
 
@@ -13,7 +13,7 @@
 ## Tracks
 
 - Primary: **Data & Verification Agents**
-- Optional 2nd: **Open – Any A2A Agents**
+- Optional 2nd: **Open  to  Any A2A Agents**
 
 ## Judging targets
 
@@ -39,4 +39,4 @@
 4. `npm run provider`  
 5. `npm run hire`  
 6. Drive real orders from Discord / other agents  
-7. Record demo · open-source · submit BUIDL  
+7. Record demo · open source · submit BUIDL  

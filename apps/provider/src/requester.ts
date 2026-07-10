@@ -1,5 +1,5 @@
 /**
- * Corrix CAP Requester — hire the live verify service (A2A)
+ * Corrix CAP Requester, hire the live verify service (A2A)
  *
  * SDK: negotiateOrder, payOrder, getDelivery, EventType.OrderCreated / OrderCompleted
  */
@@ -67,7 +67,7 @@ async function main(): Promise<void> {
     const orderId = e.order_id;
     if (!orderId || paid) return;
     paid = true;
-    console.log(`[order] created ${orderId} — paying…`);
+    console.log(`[order] created ${orderId}, paying…`);
     try {
       const result = await client.payOrder(orderId);
       console.log(`[order] paid tx:`, result?.txHash ?? result);
@@ -82,7 +82,7 @@ async function main(): Promise<void> {
     if (!orderId) return;
     try {
       const delivery = await client.getDelivery(orderId);
-      console.log("\n—— Delivery ——");
+      console.log("\n,, Delivery ,,");
       console.log(JSON.stringify(delivery, null, 2));
 
       // Parse nested schema string if present
@@ -119,7 +119,7 @@ async function main(): Promise<void> {
   // Safety timeout (SLA window can be long; fail hire script if stuck)
   setTimeout(() => {
     if (!done) {
-      console.error("[timeout] No completion within 3 minutes — is the provider online?");
+      console.error("[timeout] No completion within 3 minutes, is the provider online?");
       finish(1);
     }
   }, 180_000);

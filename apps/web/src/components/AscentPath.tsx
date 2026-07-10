@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { motion, useReducedMotion, AnimatePresence } from "framer-motion";
 
 /**
- * Hero visual — Corrix Ascent Path
+ * Hero visual, Corrix Ascent Path
  * Desktop: climbing ladder. Mobile: compact step grid (not a tall dark stack).
  */
 const STEPS = [
@@ -86,7 +86,7 @@ export function AscentPath() {
         </span>
       </div>
 
-      {/* —— Mobile: compact 3×2 path (not tall stack) —— */}
+      {/* ,, Mobile: compact 3×2 path (not tall stack) ,, */}
       <div className="ascent-mobile">
         <div className="ascent-mobile-track" aria-hidden>
           <div
@@ -134,7 +134,7 @@ export function AscentPath() {
         </AnimatePresence>
       </div>
 
-      {/* —— Desktop: full ladder —— */}
+      {/* ,, Desktop: full ladder ,, */}
       <div className="ascent-desktop">
         <div className="ascent-frame">
           <div className="ascent-rail" aria-hidden>

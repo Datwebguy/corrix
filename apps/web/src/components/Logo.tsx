@@ -1,4 +1,4 @@
-/** Corrix mark — open ring C + verification node */
+/** Corrix mark, open ring C + verification node */
 
 export function LogoMark({ size = 32 }: { size?: number }) {
   return (

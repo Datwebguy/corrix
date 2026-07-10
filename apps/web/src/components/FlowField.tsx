@@ -97,7 +97,7 @@ export function FlowField({ mode = "dual", className = "flow-field" }: FlowField
     };
 
     /**
-     * Slant spiral — unique console look:
+     * Slant spiral, unique console look:
      * path runs bottom-left → top-right on a diagonal, helix wraps around the slant.
      */
     const slantHelix = (s: number, strand: number, time: number) => {
@@ -232,7 +232,7 @@ export function FlowField({ mode = "dual", className = "flow-field" }: FlowField
         let zoneFade = 1;
         if (mode === "dual") {
           const nx = pt.x / w;
-          // Soften middle 35–65% so headline stays crisp
+          // Soften middle 35 to 65% so headline stays crisp
           if (nx > 0.32 && nx < 0.68) {
             const d = Math.min(nx - 0.32, 0.68 - nx) / 0.18;
             zoneFade = 0.25 + 0.75 * Math.min(1, d);
@@ -281,7 +281,7 @@ export function FlowField({ mode = "dual", className = "flow-field" }: FlowField
 
       ctx.restore();
 
-      // Vignette — stronger center open for dual (text), softer for slant
+      // Vignette, stronger center open for dual (text), softer for slant
       const vig = ctx.createRadialGradient(
         w * 0.5,
         h * 0.42,

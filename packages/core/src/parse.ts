@@ -14,7 +14,7 @@ export function parseRequirements(raw: unknown): VerifyRequest {
       // Plain text claim fallback
       return {
         claim: trimmed,
-        sources: ["(no sources provided — text-only request)"],
+        sources: ["(no sources provided, text-only request)"],
       };
     }
   }

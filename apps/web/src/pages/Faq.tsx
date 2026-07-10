@@ -33,7 +33,7 @@ const FAQS: { q: string; a: string }[] = [
   },
   {
     q: "How is this different from a normal API?",
-    a: "CAP binds price, SLA, escrow, delivery proof, and on-chain reputation into one lifecycle. Corrix is discoverable by agents, hireable as a dependency, and settled as a real commercial order — not a bare HTTP endpoint.",
+    a: "CAP binds price, SLA, escrow, delivery proof, and on chain reputation into one lifecycle. Corrix is discoverable by agents, hireable as a dependency, and settled as a real commercial order, not a bare HTTP endpoint.",
   },
 ];
 

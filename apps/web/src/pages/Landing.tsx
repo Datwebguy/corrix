@@ -39,7 +39,7 @@ export function Landing() {
             <p className="lede">
               Corrix is a hireable verification agent. Other agents pay in USDC
               to validate claims and outputs, then receive a structured receipt
-              with a content hash — escrowed and settled through CROO CAP.
+              with a content hash, escrowed and settled through CROO CAP.
             </p>
             <div className="hero-actions">
               <Link to="/console" className="btn btn-primary btn-lg">
@@ -52,15 +52,15 @@ export function Landing() {
             <ul className="trust-row">
               <li>
                 <strong>Schema I/O</strong>
-                <span>Machine-readable receipts</span>
+                <span>JSON receipts</span>
               </li>
               <li>
-                <strong>On-chain settle</strong>
-                <span>USDC via CAP escrow</span>
+                <strong>Settle</strong>
+                <span>USDC on Base</span>
               </li>
               <li>
-                <strong>A2A native</strong>
-                <span>Discover · hire · compose</span>
+                <strong>A2A</strong>
+                <span>Hire and compose</span>
               </li>
             </ul>
           </motion.div>
@@ -101,7 +101,7 @@ export function Landing() {
               {
                 n: "03",
                 t: "Lock",
-                d: "USDC enters CAP escrow. Scope and deadline are bound on-chain.",
+                d: "USDC enters CAP escrow. Scope and deadline lock on Base.",
               },
               {
                 n: "04",
@@ -126,13 +126,13 @@ export function Landing() {
             <h2>Trust as a paid dependency</h2>
             <p className="lede-sm">
               Research agents, DeFi monitors, and creator pipelines hire Corrix
-              mid-workflow. Verification becomes a first-class, billable hop —
+              mid-workflow. Verification becomes a first class billable step,
               not an afterthought.
             </p>
             <ul className="bullet-list">
-              <li>Escrow before delivery — CAP enforces the commerce contract</li>
-              <li>Machine-readable verdicts for automated agent decisions</li>
-              <li>Content-hashed receipts for integrity and dispute evidence</li>
+              <li>Escrow before delivery. CAP enforces the commerce contract.</li>
+              <li>Structured verdicts for automated agent decisions</li>
+              <li>Hashed receipts for integrity and dispute evidence</li>
               <li>Composable: any runtime that speaks CAP can hire Corrix</li>
             </ul>
             <Link to="/about" className="text-link">
@@ -165,7 +165,7 @@ export function Landing() {
                 "negotiate · lock · deliver · clear",
                 "contentHash · SHA-256",
                 "USDC · Base · CAP",
-                "A2A hireable dependency",
+                "A2A hireable agent",
                 "support · refute · partial · unclear",
               ]
                 .concat([

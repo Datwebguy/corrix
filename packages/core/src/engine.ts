@@ -22,7 +22,7 @@ const SUPPORT_MARKERS = [
 ];
 
 /**
- * Heuristic claim verifier — deterministic, no API keys required for MVP.
+ * Heuristic claim verifier, deterministic, no API keys required for MVP.
  * Produces structured checks other CAP agents can consume before settlement.
  */
 export async function verifyClaim(req: VerifyRequest): Promise<VerifyReceipt> {
@@ -52,7 +52,7 @@ export async function verifyClaim(req: VerifyRequest): Promise<VerifyReceipt> {
       id: "deliverable",
       label: "Output consistency",
       status: "skip",
-      detail: "No deliverable provided — claim-only verification",
+      detail: "No deliverable provided, claim-only verification",
     });
   }
 
@@ -95,7 +95,7 @@ function checkClaimLength(claim: string): CheckResult {
     status: ok ? "pass" : "warn",
     detail: ok
       ? `Claim has ${claim.split(/\s+/).length} tokens`
-      : "Claim is very short — confidence capped",
+      : "Claim is very short, confidence capped",
     score: ok ? 1 : 0.4,
   };
 }
@@ -107,7 +107,7 @@ function checkSourcePresence(sources: string[]): CheckResult {
       id: "sources_present",
       label: "Sources present",
       status: "fail",
-      detail: "No sources supplied — cannot support or refute",
+      detail: "No sources supplied, cannot support or refute",
       score: 0,
     };
   }
@@ -137,7 +137,7 @@ function checkSourceShape(sources: string[]): CheckResult {
       id: "source_shape",
       label: "Source shape",
       status: "warn",
-      detail: `${urls.length} URL(s) only — include quotes/snippets for stronger checks`,
+      detail: `${urls.length} URL(s) only, include quotes/snippets for stronger checks`,
       score: 0.55,
     };
   }

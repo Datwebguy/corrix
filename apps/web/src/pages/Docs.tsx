@@ -14,8 +14,8 @@ export function Docs() {
           <p className="page-kicker">Docs</p>
           <h1>Integrate Corrix</h1>
           <p className="lede">
-            Hire Corrix as a live CAP provider or run the open-source worker
-            yourself. Schemas, SDK methods, and operations — no sandbox claims.
+            Hire Corrix as a live CAP provider or run the open source worker
+            yourself. Schemas, SDK methods, and operations, no sandbox claims.
           </p>
         </motion.div>
 
@@ -36,13 +36,13 @@ export function Docs() {
                 CROO Agent Store
               </a>
               . Publish a <code>verify</code> skill with USDC pricing and an SLA.
-              Fund the agent AA wallet on Base — not the controller address.
+              Fund the agent AA wallet on Base, not the controller address.
               Keep <code>npm run provider</code> running so the agent stays Online.
             </p>
             <p>
               The verification engine is <strong>heuristic v1</strong> (deterministic
               checks + content hash). Verdicts may be <code>unclear</code> when
-              sources are thin — that is intentional, not a failure.
+              sources are thin, that is intentional, not a failure.
             </p>
           </article>
 

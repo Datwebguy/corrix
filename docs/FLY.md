@@ -44,4 +44,4 @@ flyctl scale count 1 --app corrix-provider   # keep a single worker
 - Run **one** provider process per SDK key. Stop local `npm run provider` when Fly is live.
 - Scale to **1** machine so two instances don’t race on the same negotiations.
 - Site: [thecorrix.vercel.app](https://thecorrix.vercel.app)  
-- Provider: always-on via Fly (this app)
+- Provider: always on via Fly (this app)

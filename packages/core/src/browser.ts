@@ -91,7 +91,7 @@ export async function verifyClaim(req: VerifyRequest): Promise<VerifyReceipt> {
     status: claimOk ? "pass" : "warn",
     detail: claimOk
       ? `Claim has ${claim.split(/\s+/).length} tokens`
-      : "Claim is very short — confidence capped",
+      : "Claim is very short, confidence capped",
     score: claimOk ? 1 : 0.4,
   });
 
@@ -166,7 +166,7 @@ export async function verifyClaim(req: VerifyRequest): Promise<VerifyReceipt> {
       id: "deliverable",
       label: "Output consistency",
       status: "skip",
-      detail: "No deliverable provided — claim-only verification",
+      detail: "No deliverable provided, claim-only verification",
     });
   }
 

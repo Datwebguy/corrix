@@ -83,7 +83,7 @@ function CheckList({ checks }: { checks: CheckResult[] }) {
   );
 }
 
-/** Product console — separate from marketing site shell */
+/** Product console, separate from marketing site shell */
 export function Console() {
   const reduceMotion = useReducedMotion();
   const [claim, setClaim] = useState<string>(EXAMPLES[0].claim);
@@ -168,8 +168,8 @@ export function Console() {
           <h1>Verification console</h1>
           <p>
             Run the Corrix engine in-browser on a claim and sources. Output uses
-            the same receipt schema as live CAP deliveries. Paid on-chain hires
-            go through the provider worker and Agent Store — see Docs.
+            the same receipt schema as live CAP deliveries. Paid on chain hires
+            go through the provider worker and Agent Store, see Docs.
           </p>
         </div>
 

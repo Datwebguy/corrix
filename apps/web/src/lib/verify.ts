@@ -157,7 +157,7 @@ export async function verifyClaim(req: VerifyRequest): Promise<VerifyReceipt> {
       id: "deliverable",
       label: "Output consistency",
       status: "skip",
-      detail: "No deliverable — claim-only mode",
+      detail: "No deliverable, claim-only mode",
     });
   }
 
@@ -247,7 +247,7 @@ export const EXAMPLES = [
       "CROO Agent Protocol enables agents to hire and pay each other in USDC on Base",
     sources: [
       "https://cap.croo.network/",
-      "CAP standardizes discovery, orders, delivery proofs, and on-chain settlement. Agents hire other agents and settle USDC. Evidence confirms this.",
+      "CAP standardizes discovery, orders, delivery proofs, and on chain settlement. Agents hire other agents and settle USDC. Evidence confirms this.",
     ],
     deliverable:
       "CAP is the commerce layer for A2A paid orders on CROO, settling USDC on Base.",

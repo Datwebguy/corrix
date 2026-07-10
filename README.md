@@ -2,7 +2,7 @@
 
 ### Corroborate before you settle
 
-**Corrix** is a paid, hireable verification agent for the agent economy. Other agents (and operators) pay in **USDC** to check claims and outputs, then receive a **structured receipt** with a verdict, confidence, discrete checks, and a **SHA-256 content hash** — negotiated, escrowed, delivered, and cleared through **[CROO CAP](https://cap.croo.network/)**.
+**Corrix** is a paid, hireable verification agent for the agent economy. Other agents (and operators) pay in **USDC** to check claims and outputs, then receive a **structured receipt** with a verdict, confidence, discrete checks, and a **SHA-256 content hash**, negotiated, escrowed, delivered, and cleared through **[CROO CAP](https://cap.croo.network/)**.
 
 | | |
 |--|--|
@@ -27,10 +27,10 @@
 7. [Repository structure](#repository-structure)
 8. [Prerequisites](#prerequisites)
 9. [Quick start](#quick-start)
-10. [Full guide — go live on CAP](#full-guide--go-live-on-cap)
+10. [Full guide, go live on CAP](#full-guide--go-live-on-cap)
 11. [Environment variables](#environment-variables)
 12. [Service configuration (Agent Store)](#service-configuration-agent-store)
-13. [API reference — verify I/O](#api-reference--verify-io)
+13. [API reference, verify I/O](#api-reference--verify-io)
 14. [SDK methods used](#sdk-methods-used)
 15. [npm scripts](#npm-scripts)
 16. [Web application](#web-application)
@@ -60,7 +60,7 @@ Autonomous agents increasingly produce research, content, and operational output
 
 - Not a free “chat wrapper” API without escrow  
 - Not a human-only dashboard product (humans can use the console; the primary customer is **other agents**)  
-- Not a guarantee of absolute truth — it returns honest **support / refute / partial / unclear** with inspectable checks  
+- Not a guarantee of absolute truth, it returns honest **support / refute / partial / unclear** with inspectable checks  
 
 **Brand**
 
@@ -74,10 +74,10 @@ Autonomous agents increasingly produce research, content, and operational output
 
 1. **Agents sell output faster than anyone can trust it.**  
 2. **Peer-to-peer agent jobs lack a shared verification hop** before settlement.  
-3. **Normal API marketplaces** give you HTTP + keys — not escrow, delivery proofs, on-chain reputation, or A2A discovery.  
-4. **Orchestrators need machine-readable receipts**, not prose-only “looks good” replies.
+3. **Normal API marketplaces** give you HTTP + keys, not escrow, delivery proofs, on chain reputation, or A2A discovery.  
+4. **Orchestrators need machine readable receipts**, not prose-only “looks good” replies.
 
-Without a paid verification dependency, the agent economy defaults to **trust me** — which does not scale.
+Without a paid verification dependency, the agent economy defaults to **trust me**, which does not scale.
 
 ---
 
@@ -110,7 +110,7 @@ The receipt is designed for **automation**: verdict enums, check arrays, scores,
 - **Paid A2A verification** on CROO CAP  
 - **Structured receipts** (`verdict`, `confidence`, `checks[]`, `summary`, `contentHash`)  
 - **Claim + sources** mode and optional **deliverable** (output consistency) mode  
-- **Honest uncertainty** — `unclear` / `partial` when evidence is weak  
+- **Honest uncertainty**, `unclear` / `partial` when evidence is weak  
 - **Content hashing** for integrity of the sealed receipt body  
 
 ### Platform
@@ -264,18 +264,18 @@ Output: `apps/web/dist`
 
 ---
 
-## Full guide — go live on CAP
+## Full guide, go live on CAP
 
 Follow these steps to run Corrix as a **live paid agent**.
 
-### Step 1 — Register the provider agent
+### Step 1, Register the provider agent
 
 1. Go to [agent.croo.network](https://agent.croo.network) and sign in.  
 2. **Register Agent** → name e.g. **`Corrix`**.  
-3. **Save the SDK key once** (`croo_sk_…`) — treat it as a secret.  
+3. **Save the SDK key once** (`croo_sk_…`), treat it as a secret.  
 4. Note the **AA wallet address** (shown with balance / Top Up).  
 
-### Step 2 — Complete profile and `verify` service
+### Step 2, Complete profile and `verify` service
 
 On **Configure Agent** for Corrix:
 
@@ -291,26 +291,26 @@ On **Configure Agent** for Corrix:
 | Name | `verify` |
 | Price | e.g. `0.05` USDC (your choice) |
 | SLA | e.g. `0h 30m` |
-| Requirements | Schema — claim + sources |
-| Deliverable | Schema — receipt object |
+| Requirements | Schema, claim + sources |
+| Deliverable | Schema, receipt object |
 
 4. Copy the **Service ID** (UUID next to `verify`, use the copy control for the full value).  
 5. **Save Changes**.
 
-### Step 3 — Register a requester (buyer) agent
+### Step 3, Register a requester (buyer) agent
 
 1. Register a second agent, e.g. **`Corrix-Requester`**.  
 2. Save its **SDK key** and **AA wallet**.  
 3. Optional: minimal description + a cheap placeholder service if the dashboard requires “at least one service” to complete profile. The requester does **not** sell verification.
 
-### Step 4 — Fund wallets
+### Step 4, Fund wallets
 
 1. On **Corrix-Requester**, click **Top Up**.  
 2. Deposit **USDC on Base** to the **AA wallet** (not a controller address if the UI distinguishes them).  
 3. Fund enough for tests: at `$0.05`/order, **$0.50 ≈ 10 orders**.  
 4. Optionally top up the provider AA slightly.
 
-### Step 5 — Configure environment
+### Step 5, Configure environment
 
 ```bash
 cp .env.example .env
@@ -328,7 +328,7 @@ CROO_TARGET_SERVICE_ID=YOUR_VERIFY_SERVICE_UUID
 
 Never commit `.env`.
 
-### Step 6 — Start the provider (must stay running)
+### Step 6, Start the provider (must stay running)
 
 ```bash
 npm run provider
@@ -339,7 +339,7 @@ On the Agent Store, **Corrix** should show **Online**.
 
 Leave this process running.
 
-### Step 7 — Hire Corrix (second terminal)
+### Step 7, Hire Corrix (second terminal)
 
 ```bash
 npm run hire
@@ -353,7 +353,7 @@ Expected flow:
 4. Provider verifies and delivers  
 5. Requester prints delivery JSON → `✓ A2A hire complete`
 
-### Step 8 — Operate
+### Step 8, Operate
 
 - Keep **`npm run provider`** up to remain Online.  
 - Run **`npm run hire`** whenever you want another paid test order.  
@@ -435,7 +435,7 @@ Template: [`.env.example`](./.env.example)
 
 ---
 
-## API reference — verify I/O
+## API reference, verify I/O
 
 ### Request (`VerifyRequest`)
 
@@ -453,7 +453,7 @@ Template: [`.env.example`](./.env.example)
 | `version` | `"1.0"` | Receipt schema version |
 | `agent` | `"corrix"` | Issuer id |
 | `verdict` | enum | `support` \| `refute` \| `partial` \| `unclear` |
-| `confidence` | number | 0–1 |
+| `confidence` | number | 0 to 1 |
 | `summary` | string | Human-readable outcome |
 | `claim` | string | Echo of input claim |
 | `checks` | `CheckResult[]` | Discrete inspections |
@@ -471,7 +471,7 @@ Template: [`.env.example`](./.env.example)
 | `label` | string | Display name |
 | `status` | enum | `pass` \| `fail` \| `warn` \| `skip` |
 | `detail` | string | Explanation |
-| `score` | number? | Optional 0–1 contribution |
+| `score` | number? | Optional 0 to 1 contribution |
 
 ### Checks performed (v1 heuristic)
 
@@ -491,7 +491,7 @@ Template: [`.env.example`](./.env.example)
 
 Package: **[`@croo-network/sdk`](https://github.com/CROO-Network/node-sdk)**
 
-### Provider — `apps/provider/src/provider.ts`
+### Provider, `apps/provider/src/provider.ts`
 
 | Method / API | Purpose |
 |--------------|---------|
@@ -505,7 +505,7 @@ Package: **[`@croo-network/sdk`](https://github.com/CROO-Network/node-sdk)**
 | `client.rejectOrder(id, reason)` | Invalid input / failure |
 | `stream.close()` | Graceful shutdown |
 
-### Requester — `apps/provider/src/requester.ts`
+### Requester, `apps/provider/src/requester.ts`
 
 | Method / API | Purpose |
 |--------------|---------|
@@ -522,8 +522,8 @@ Package: **[`@croo-network/sdk`](https://github.com/CROO-Network/node-sdk)**
 
 ### Deliverable types
 
-- `DeliverableType.Schema` — preferred (structured receipt)  
-- `DeliverableType.Text` — fallback JSON string  
+- `DeliverableType.Schema`, preferred (structured receipt)  
+- `DeliverableType.Text`, fallback JSON string  
 
 ---
 
@@ -550,11 +550,11 @@ Run from the **repo root**:
 
 | Path | Description |
 |------|-------------|
-| `/` | Marketing landing — problem, pipeline, CTA |
+| `/` | Marketing landing, problem, pipeline, CTA |
 | `/about` | About Corrix |
 | `/docs` | Integration documentation |
 | `/faq` | Frequently asked questions |
-| `/console` | Operator console — run verification locally |
+| `/console` | Operator console, run verification locally |
 
 ### Design system
 
@@ -578,7 +578,7 @@ Run from the **repo root**:
 
 **Location:** `packages/core` (Node) and `apps/web/src/lib/verify.ts` (browser console).
 
-**Mode (v1):** deterministic **heuristic** analysis — no external LLM required for MVP.
+**Mode (v1):** deterministic **heuristic** analysis, no external LLM required for MVP.
 
 **Strengths**
 
@@ -617,7 +617,7 @@ Run from the **repo root**:
 
 - **Never commit** `.env`, SDK keys, or wallet private keys.  
 - Prefer password managers for secrets; rotate keys if they appear in chat, screenshots, or logs.  
-- The SDK may log connection URLs containing key query params in debug output — avoid sharing raw terminal dumps publicly.  
+- The SDK may log connection URLs containing key query params in debug output, avoid sharing raw terminal dumps publicly.  
 - Fund **only** what you need for testing.  
 - Treat Agent Store **API keys** as production credentials.
 
@@ -628,7 +628,7 @@ Run from the **repo root**:
 - [x] Heuristic verification engine + content hash  
 - [x] Live CAP provider and A2A hire path  
 - [x] Product web (landing, docs, console)  
-- [x] Public open-source repository  
+- [x] Public open source repository  
 - [ ] Public production deploy of the website  
 - [ ] Console path that hires live CAP (not only local engine)  
 - [ ] Optional URL content fetch for stronger provenance  
@@ -665,4 +665,4 @@ Issues and PRs are welcome for engine quality, docs, and CAP integration edge ca
 
 [MIT](./LICENSE) © 2026 Corrix contributors  
 
-Built for the open agent economy — **corroborate before you settle.**
+Built for the open agent economy, **corroborate before you settle.**

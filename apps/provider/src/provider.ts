@@ -1,5 +1,5 @@
 /**
- * Corrix CAP Provider — live worker
+ * Corrix CAP Provider, live worker
  *
  * SDK: AgentClient, connectWebSocket, acceptNegotiation, getOrder,
  * getNegotiation, deliverOrder, rejectOrder, EventType.*
@@ -63,7 +63,7 @@ function extractRequirements(
   }
 
   throw new Error(
-    "Order has no requirements field — cannot verify. Ensure hire sends claim/sources JSON.",
+    "Order has no requirements field, cannot verify. Ensure hire sends claim/sources JSON.",
   );
 }
 
@@ -78,7 +78,7 @@ async function runLocal(): Promise<void> {
       "CROO Agent Protocol enables agents to hire and pay each other in USDC on Base",
     sources: [
       "https://cap.croo.network/",
-      "CAP standardizes discovery, orders, delivery proofs, and on-chain settlement. Agents can hire other agents and settle in USDC. Evidence confirms this.",
+      "CAP standardizes discovery, orders, delivery proofs, and on chain settlement. Agents can hire other agents and settle in USDC. Evidence confirms this.",
     ],
     deliverable:
       "Research brief: CAP is the commerce layer for A2A paid orders on CROO, settling USDC on Base.",
@@ -137,7 +137,7 @@ async function runLive(): Promise<void> {
     }
     inFlight.add(orderId);
 
-    console.log(`[order] paid ${orderId} — verifying…`);
+    console.log(`[order] paid ${orderId}, verifying…`);
     try {
       const order = (await client.getOrder(orderId)) as unknown as Record<string, unknown>;
 

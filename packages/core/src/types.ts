@@ -1,4 +1,4 @@
-/** Corrix verification contracts — CAP Schema I/O */
+/** Corrix verification contracts, CAP Schema I/O */
 
 export type Verdict = "support" | "refute" | "unclear" | "partial";
 
