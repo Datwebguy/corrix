@@ -187,7 +187,6 @@ export function Console() {
 
       <div className="console-body">
         <div className="console-intro">
-          <p className="console-kicker">No login · No wallet · Instant</p>
           <h1>Try the verification engine</h1>
           <p>
             Type a claim you want checked, add sources (links or quotes), then
