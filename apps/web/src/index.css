@@ -2151,3 +2151,195 @@ html {
   margin-left: auto;
   margin-right: auto;
 }
+
+/* Console guidance UX */
+.console-kicker {
+  display: inline-flex;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+  margin: 0 0 0.5rem;
+}
+
+.console-intro a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.console-howto {
+  list-style: none;
+  display: grid;
+  gap: 0.55rem;
+  margin: 0 0 1.25rem;
+  padding: 0;
+}
+
+@media (min-width: 720px) {
+  .console-howto {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.75rem;
+  }
+}
+
+.console-howto li {
+  display: flex;
+  gap: 0.65rem;
+  align-items: flex-start;
+  padding: 0.75rem 0.85rem;
+  border-radius: 12px;
+  border: 1px solid rgba(184, 242, 74, 0.16);
+  background: rgba(12, 20, 15, 0.9);
+  min-width: 0;
+}
+
+.howto-n {
+  flex-shrink: 0;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #0a1208;
+  background: var(--accent);
+}
+
+.console-howto strong {
+  display: block;
+  font-size: 0.88rem;
+  margin-bottom: 0.15rem;
+  color: #f2f7f0;
+}
+
+.console-howto p {
+  margin: 0;
+  font-size: 0.78rem;
+  color: #b8c8bc;
+  line-height: 1.4;
+}
+
+.card-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.35rem;
+}
+
+.card-title-row .card-title {
+  margin-bottom: 0;
+}
+
+.link-btn {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--accent);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem 0.35rem;
+}
+
+.link-btn:hover {
+  text-decoration: underline;
+}
+
+.examples-block {
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  border-radius: 12px;
+  border: 1px dashed rgba(184, 242, 74, 0.22);
+  background: rgba(184, 242, 74, 0.04);
+}
+
+.examples-label {
+  margin: 0 0 0.5rem;
+  font-size: 0.78rem;
+  color: #c5d4c8;
+}
+
+.examples {
+  margin-bottom: 0;
+}
+
+.field-hint {
+  margin: 0 0 0.4rem;
+  font-size: 0.75rem;
+  color: #8fa093;
+  line-height: 1.4;
+}
+
+.field label .req {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-left: 0.35rem;
+}
+
+.field label .opt {
+  font-size: 0.68rem;
+  font-weight: 500;
+  color: #7a8b7e;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-left: 0.35rem;
+}
+
+.console-error {
+  margin: 0 0 0.75rem;
+  padding: 0.6rem 0.75rem;
+  border-radius: 8px;
+  background: rgba(255, 107, 91, 0.12);
+  border: 1px solid rgba(255, 107, 91, 0.35);
+  color: #ffb4ab;
+  font-size: 0.85rem;
+}
+
+.console-foot-note {
+  margin: 0.75rem 0 0;
+  font-size: 0.75rem;
+  color: #8fa093;
+  line-height: 1.45;
+}
+
+.console-foot-note a {
+  color: var(--accent);
+}
+
+.receipt-guide {
+  text-align: left !important;
+  align-content: start;
+  justify-items: start;
+  min-height: 220px !important;
+  padding: 1rem !important;
+}
+
+.receipt-guide-title {
+  font-weight: 700;
+  color: #f2f7f0 !important;
+  margin: 0 0 0.65rem !important;
+  font-size: 0.95rem !important;
+  max-width: none !important;
+}
+
+.receipt-guide ol {
+  margin: 0;
+  padding-left: 1.15rem;
+  color: #c5d4c8;
+  font-size: 0.85rem;
+  line-height: 1.55;
+}
+
+.receipt-guide li {
+  margin-bottom: 0.35rem;
+}
+
+.receipt-guide strong {
+  color: var(--accent);
+}

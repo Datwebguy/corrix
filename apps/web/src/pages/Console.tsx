@@ -11,12 +11,13 @@ import {
 } from "../lib/verify";
 import { LogoWord } from "../components/Logo";
 import { FlowField } from "../components/FlowField";
+import { SITE } from "../lib/site";
 
 const CAP_STEPS: { id: CapStep; label: string }[] = [
-  { id: "negotiate", label: "Negotiate" },
-  { id: "lock", label: "Lock" },
-  { id: "deliver", label: "Deliver" },
-  { id: "clear", label: "Clear" },
+  { id: "negotiate", label: "Start" },
+  { id: "lock", label: "Check" },
+  { id: "deliver", label: "Score" },
+  { id: "clear", label: "Receipt" },
 ];
 
 function ConfidenceRing({ value, verdict }: { value: number; verdict: Verdict }) {
@@ -83,22 +84,25 @@ function CheckList({ checks }: { checks: CheckResult[] }) {
   );
 }
 
-/** Product console, separate from marketing site shell */
+/** Product console: free try engine, no login */
 export function Console() {
   const reduceMotion = useReducedMotion();
-  const [claim, setClaim] = useState<string>(EXAMPLES[0].claim);
-  const [sourcesText, setSourcesText] = useState<string>(EXAMPLES[0].sources.join("\n"));
-  const [deliverable, setDeliverable] = useState<string>(EXAMPLES[0].deliverable);
-  const [activeExample, setActiveExample] = useState(0);
+  const [claim, setClaim] = useState("");
+  const [sourcesText, setSourcesText] = useState("");
+  const [deliverable, setDeliverable] = useState("");
+  const [activeExample, setActiveExample] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [capStep, setCapStep] = useState<CapStep>("idle");
   const [receipt, setReceipt] = useState<VerifyReceipt | null>(null);
   const [copied, setCopied] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const stepIndex = useMemo(() => {
     const order: CapStep[] = ["negotiate", "lock", "deliver", "clear"];
     return order.indexOf(capStep);
   }, [capStep]);
+
+  const canRun = claim.trim().length >= 8 && !loading;
 
   function loadExample(i: number) {
     const ex = EXAMPLES[i];
@@ -108,12 +112,27 @@ export function Console() {
     setDeliverable(ex.deliverable);
     setReceipt(null);
     setCapStep("idle");
+    setError(null);
+  }
+
+  function clearForm() {
+    setActiveExample(null);
+    setClaim("");
+    setSourcesText("");
+    setDeliverable("");
+    setReceipt(null);
+    setCapStep("idle");
+    setError(null);
   }
 
   async function runVerify() {
-    if (!claim.trim() || loading) return;
+    if (!canRun) {
+      setError("Enter a claim (at least a short sentence) before running.");
+      return;
+    }
     setLoading(true);
     setReceipt(null);
+    setError(null);
     const sources = sourcesText
       .split("\n")
       .map((s) => s.trim())
@@ -123,18 +142,21 @@ export function Console() {
 
     try {
       setCapStep("negotiate");
-      await wait(320);
+      await wait(280);
       setCapStep("lock");
-      await wait(360);
+      await wait(300);
       setCapStep("deliver");
       const result = await verifyClaim({
         claim,
         sources: sources.length ? sources : ["(no sources provided)"],
         deliverable: deliverable.trim() || undefined,
       });
-      await wait(240);
+      await wait(220);
       setReceipt(result);
       setCapStep("clear");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Verification failed");
+      setCapStep("idle");
     } finally {
       setLoading(false);
     }
@@ -151,7 +173,7 @@ export function Console() {
           </Link>
           <div className="console-top-meta">
             <span className="console-badge">
-              <span className="live-dot" /> Console
+              <span className="live-dot" /> Free try
             </span>
             <Link to="/docs" className="console-link">
               Docs
@@ -165,73 +187,144 @@ export function Console() {
 
       <div className="console-body">
         <div className="console-intro">
-          <h1>Verification console</h1>
+          <p className="console-kicker">No login · No wallet · Instant</p>
+          <h1>Try the verification engine</h1>
           <p>
-            Paste a claim and sources to run the engine. Receipts match the CAP
-            delivery schema. For paid hires, use the Agent Store (see Docs).
+            Type a claim you want checked, add sources (links or quotes), then
+            run. You get a structured receipt: verdict, checks, and a content
+            hash. This page is free. Paid agent-to-agent jobs run on the{" "}
+            <a href={SITE.agentStore} target="_blank" rel="noreferrer">
+              Agent Store
+            </a>
+            .
           </p>
         </div>
 
+        <ol className="console-howto">
+          <li>
+            <span className="howto-n">1</span>
+            <div>
+              <strong>Write a claim</strong>
+              <p>A statement to verify (your words, not ours).</p>
+            </div>
+          </li>
+          <li>
+            <span className="howto-n">2</span>
+            <div>
+              <strong>Add sources</strong>
+              <p>One URL or evidence line per row. Stronger sources, clearer verdict.</p>
+            </div>
+          </li>
+          <li>
+            <span className="howto-n">3</span>
+            <div>
+              <strong>Run verification</strong>
+              <p>See the receipt on the right. Copy JSON if you need it.</p>
+            </div>
+          </li>
+        </ol>
+
         <div className="console-grid">
           <div className="card">
-            <div className="card-title">Requirements</div>
-            <div className="examples">
-              {EXAMPLES.map((ex, i) => (
-                <button
-                  key={ex.label}
-                  type="button"
-                  className={`chip ${activeExample === i ? "active" : ""}`}
-                  onClick={() => loadExample(i)}
-                >
-                  {ex.label}
+            <div className="card-title-row">
+              <div className="card-title">Your input</div>
+              {(claim || sourcesText || deliverable) && (
+                <button type="button" className="link-btn" onClick={clearForm}>
+                  Clear
                 </button>
-              ))}
+              )}
+            </div>
+
+            <div className="examples-block">
+              <p className="examples-label">Not sure what to type? Load an example:</p>
+              <div className="examples">
+                {EXAMPLES.map((ex, i) => (
+                  <button
+                    key={ex.label}
+                    type="button"
+                    className={`chip ${activeExample === i ? "active" : ""}`}
+                    onClick={() => loadExample(i)}
+                  >
+                    {ex.label}
+                  </button>
+                ))}
+              </div>
             </div>
 
             <div className="field">
-              <label htmlFor="claim">Claim</label>
+              <label htmlFor="claim">
+                Claim <span className="req">required</span>
+              </label>
+              <p className="field-hint">What should Corrix check? Example: a fact, news line, or agent output claim.</p>
               <textarea
                 id="claim"
                 value={claim}
-                onChange={(e) => setClaim(e.target.value)}
-                placeholder="Statement to verify…"
+                onChange={(e) => {
+                  setClaim(e.target.value);
+                  setActiveExample(null);
+                  setError(null);
+                }}
+                placeholder="e.g. Base is an Ethereum Layer 2 network incubated by Coinbase"
+                rows={3}
+              />
+            </div>
+            <div className="field">
+              <label htmlFor="sources">
+                Sources <span className="opt">recommended</span>
+              </label>
+              <p className="field-hint">One per line: a URL and/or a short evidence quote. Empty sources often return unclear.</p>
+              <textarea
+                id="sources"
+                value={sourcesText}
+                onChange={(e) => {
+                  setSourcesText(e.target.value);
+                  setActiveExample(null);
+                }}
+                placeholder={"https://example.com/article\nQuote from the article that supports or challenges the claim"}
                 rows={4}
               />
             </div>
             <div className="field">
-              <label htmlFor="sources">Sources (one per line)</label>
-              <textarea
-                id="sources"
-                value={sourcesText}
-                onChange={(e) => setSourcesText(e.target.value)}
-                placeholder="URL or evidence text"
-                rows={5}
-              />
-            </div>
-            <div className="field">
-              <label htmlFor="deliverable">Deliverable (optional)</label>
+              <label htmlFor="deliverable">
+                Agent deliverable <span className="opt">optional</span>
+              </label>
+              <p className="field-hint">Paste another agent’s answer if you want Corrix to check consistency with the claim.</p>
               <textarea
                 id="deliverable"
                 value={deliverable}
-                onChange={(e) => setDeliverable(e.target.value)}
-                placeholder="Upstream agent output to check"
-                rows={3}
+                onChange={(e) => {
+                  setDeliverable(e.target.value);
+                  setActiveExample(null);
+                }}
+                placeholder="Paste agent output here (optional)"
+                rows={2}
               />
             </div>
+
+            {error && <p className="console-error">{error}</p>}
+
             <button
               type="button"
               className="btn btn-primary"
               style={{ width: "100%" }}
-              disabled={loading || !claim.trim()}
+              disabled={!canRun}
               onClick={() => void runVerify()}
             >
-              {loading ? "Verifying…" : "Run verification"}
+              {loading ? "Running checks…" : "Run free verification"}
             </button>
+            <p className="console-foot-note">
+              Free browser check. For paid CAP hires by other agents, list stays on the{" "}
+              <a href={SITE.agentStore} target="_blank" rel="noreferrer">
+                Agent Store
+              </a>
+              .{" "}
+              <Link to="/docs">Read how to hire</Link>
+            </p>
           </div>
 
           <div className="card">
-            <div className="card-title">Receipt · pipeline stages</div>
-            <div className="timeline" aria-label="Verification pipeline stages">
+            <div className="card-title">Your receipt</div>
+            <div className="timeline" aria-label="Verification stages">
               {CAP_STEPS.map((s, i) => {
                 const done = stepIndex > i || capStep === "clear";
                 const active = capStep === s.id && capStep !== "clear";
@@ -253,12 +346,17 @@ export function Console() {
               {!receipt && !loading && (
                 <motion.div
                   key="empty"
-                  className="receipt-empty"
+                  className="receipt-empty receipt-guide"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                 >
-                  <p>Structured receipt appears here after the engine finishes.</p>
+                  <p className="receipt-guide-title">Waiting for a run</p>
+                  <ol>
+                    <li>Fill claim + sources on the left (or load an example)</li>
+                    <li>Click <strong>Run free verification</strong></li>
+                    <li>Verdict, checks, and hash show up here</li>
+                  </ol>
                 </motion.div>
               )}
               {loading && !receipt && (
@@ -270,9 +368,9 @@ export function Console() {
                   exit={{ opacity: 0 }}
                 >
                   <p>
-                    {capStep === "negotiate" && "Negotiating…"}
-                    {capStep === "lock" && "Locking order terms…"}
-                    {capStep === "deliver" && "Running checks…"}
+                    {capStep === "negotiate" && "Preparing verification…"}
+                    {capStep === "lock" && "Scoring claim against sources…"}
+                    {capStep === "deliver" && "Building receipt…"}
                   </p>
                 </motion.div>
               )}
