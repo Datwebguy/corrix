@@ -264,19 +264,34 @@ export async function runLive(): Promise<void> {
 
     console.log(`[order] fulfill ${orderId}, verifying…`);
     try {
-      const order = (await client.getOrder(orderId)) as unknown as Record<string, unknown>;
-      const status = String(order.status ?? "");
-      const statusLower = status.toLowerCase();
-      const paid =
-        forcePaid ||
-        PAID_STATUSES.has(status) ||
-        statusLower === "paid" ||
-        statusLower === "delivering" ||
-        Boolean(order.paidAt) ||
-        Boolean(order.payTxHash);
+      // Always re-fetch status. CAP only accepts deliver when status is paid
+      // (payTxHash / UI "LOCK" can appear slightly before status flips).
+      let order = (await client.getOrder(orderId)) as unknown as Record<string, unknown>;
+      let status = String(order.status ?? "");
+      let statusLower = status.toLowerCase();
 
-      if (!paid) {
-        console.log(`[order] ${orderId} status=${status} not paid yet, skip fulfill`);
+      const isDeliverable = (s: string) => {
+        const l = s.toLowerCase();
+        return l === "paid" || l === "delivering";
+      };
+
+      if (!isDeliverable(status)) {
+        // Brief wait — escrow lock often races ahead of status=paid
+        if (forcePaid || order.paidAt || order.payTxHash) {
+          for (let w = 0; w < 8 && !isDeliverable(status); w++) {
+            await sleep(1500);
+            order = (await client.getOrder(orderId)) as unknown as Record<string, unknown>;
+            status = String(order.status ?? "");
+            statusLower = status.toLowerCase();
+            console.log(`[order] wait paid ${orderId} status=${status} try=${w + 1}`);
+          }
+        }
+      }
+
+      if (!isDeliverable(status)) {
+        console.log(
+          `[order] ${orderId} status=${status} not deliverable yet (need paid), skip`,
+        );
         return;
       }
 
@@ -305,12 +320,17 @@ export async function runLive(): Promise<void> {
       const ok = await deliverReceipt(orderId, receipt);
       if (ok) delivered.add(orderId);
     } catch (err) {
-      console.error(`[order] handle failed ${orderId}`, err instanceof Error ? err.message : err);
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error(`[order] handle failed ${orderId}`, msg);
+
+      // Never reject for "not paid yet" — poll / order_paid will retry
+      if (/only be delivered when status is paid|INVALID_STATUS/i.test(msg)) {
+        console.warn(`[order] ${orderId} deliver too early, will retry via poll`);
+        return;
+      }
+
       try {
-        await client.rejectOrder(
-          orderId,
-          err instanceof Error ? err.message.slice(0, 200) : "verification failed",
-        );
+        await client.rejectOrder(orderId, msg.slice(0, 200));
       } catch {
         /* ignore secondary failure */
       }
@@ -340,15 +360,23 @@ export async function runLive(): Promise<void> {
         try {
           const order = await client.getOrder(orderId);
           const status = String(order.status ?? "");
-          const paid =
-            PAID_STATUSES.has(status) ||
-            Boolean(order.paidAt) ||
-            Boolean(order.payTxHash);
+          const statusLower = status.toLowerCase();
+          // Only fulfill when API says paid — UI LOCK can lag status
+          const paid = statusLower === "paid" || statusLower === "delivering";
 
           if (paid) {
             console.log(`[poll] ${orderId} is paid (status=${status}), fulfilling`);
             await fulfillPaidOrder(orderId, negotiationId ?? order.negotiationId, true);
             return;
+          }
+
+          // Escrow signals without status=paid yet — keep polling
+          if (order.paidAt || order.payTxHash) {
+            if (i === 0 || i % 3 === 0) {
+              console.log(
+                `[poll] ${orderId} has pay signal but status=${status}, waiting…`,
+              );
+            }
           }
 
           if (TERMINAL_STATUSES.has(status)) {
@@ -410,10 +438,10 @@ export async function runLive(): Promise<void> {
     // If already paid by the time we see create, fulfill immediately
     try {
       const order = await client.getOrder(orderId);
-      const status = String(order.status ?? "");
-      if (PAID_STATUSES.has(status) || order.paidAt || order.payTxHash) {
+      const status = String(order.status ?? "").toLowerCase();
+      if (status === "paid" || status === "delivering") {
         console.log(`[event] order_created but already paid ${orderId}`);
-        await fulfillPaidOrder(orderId, e.negotiation_id ?? order.negotiationId);
+        await fulfillPaidOrder(orderId, e.negotiation_id ?? order.negotiationId, true);
       }
     } catch {
       /* poll will retry */
