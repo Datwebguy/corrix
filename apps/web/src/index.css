@@ -444,11 +444,8 @@ code {
 
 @media (min-width: 960px) {
   .hero-stage {
-  padding: clamp(1.5rem, 5vw, 2.5rem) 0 clamp(1.75rem, 5vw, 3.5rem);
-  position: relative;
-  z-index: 1;
-  overflow: hidden;
-}
+    padding: 4.5rem 0 5rem;
+  }
 }
 
 .hero-layout {
@@ -459,14 +456,22 @@ code {
   min-width: 0;
 }
 
+/* Side-by-side: copy left, ascent right */
 @media (min-width: 980px) {
   .hero-layout {
-  display: grid;
-  gap: clamp(1.5rem, 4vw, 2.5rem);
-  align-items: center;
-  width: 100%;
-  min-width: 0;
-}
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+    gap: 2.5rem 3rem;
+    align-items: center;
+  }
+
+  .hero-copy {
+    min-width: 0;
+  }
+
+  .hero-visual {
+    min-width: 0;
+    width: 100%;
+  }
 }
 
 .eyebrow {
@@ -534,38 +539,37 @@ code {
   list-style: none;
   display: grid;
   grid-template-columns: 1fr;
-  gap: 0.55rem;
+  gap: 0.5rem;
   width: 100%;
 }
 
 @media (min-width: 520px) {
   .trust-row {
-  list-style: none;
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 0.55rem;
-  width: 100%;
-}
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }
 
 .trust-row li {
-  padding: 0.85rem 0.9rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.65rem 0.75rem;
   border-radius: var(--radius-sm);
-  background: rgba(10, 16, 13, 0.65);
+  background: rgba(10, 16, 13, 0.72);
   border: 1px solid var(--border);
   backdrop-filter: blur(8px);
+  min-width: 0;
 }
 
 .trust-row strong {
-  display: block;
-  font-size: 0.88rem;
+  font-size: 0.82rem;
   letter-spacing: -0.02em;
-  margin-bottom: 0.15rem;
 }
 
 .trust-row span {
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   color: var(--text-mute);
+  line-height: 1.3;
 }
 
 /* ── Hero Ascent Path (unique ladder, not AI receipt card) ─ */
