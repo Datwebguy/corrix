@@ -435,11 +435,15 @@ export async function runLive(): Promise<void> {
 
   // Catch-up: any already-paid open orders (e.g. provider restarted mid-hire)
   try {
-    const open = await client.listOrders({ status: "paid", pageSize: 20 });
+    const open = await client.listOrders({
+      status: "paid",
+      pageSize: 20,
+      role: "provider",
+    });
     for (const o of open ?? []) {
       if (o.orderId && !delivered.has(o.orderId)) {
         console.log(`[catchup] paid order ${o.orderId}`);
-        await fulfillPaidOrder(o.orderId, o.negotiationId);
+        await fulfillPaidOrder(o.orderId, o.negotiationId, true);
       }
     }
   } catch (err) {
